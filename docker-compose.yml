@@ -1,0 +1,114 @@
+version: "3.9"
+
+# ── UERIS — Urban Environmental Risk Intelligence System ──────────────────────
+# One-command startup:  docker-compose up
+#
+# Services:
+#   mongodb       — database (batch_views + realtime_views)
+#   batch         — runs batch_processing.py once on startup
+#   simulator     — stream_simulator.py (fetches live data every 60s)
+#   speed         — speed_processing.py (processes new readings every 5s)
+#   serving       — app.py Flask API + dashboard on http://localhost:5000
+#
+# Environment variables (override in .env file):
+#   WAQI_TOKEN          your WAQI API token
+#   ALERT_WEBHOOK_URL   Slack/Teams webhook for anomaly alerts
+#   API_KEY             optional API key auth on /api/* endpoints
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: ueris_mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  batch:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ueris_batch
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017/
+      - DB_NAME=urban_env_db
+      - HISTORICAL_CSV=/app/data/historical/city_day.csv
+      - PYSPARK_PYTHON=/usr/local/bin/python3
+    volumes:
+      - ./data:/app/data
+    command: python batch_layer/batch_processing.py
+    restart: "no"   # run once, exit
+
+  simulator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ueris_simulator
+    depends_on:
+      batch:
+        condition: service_completed_successfully
+    environment:
+      - WAQI_TOKEN=${WAQI_TOKEN:-demo}
+      - STREAM_OUTPUT_DIR=/app/data/streaming_input
+      - FETCH_INTERVAL_SECONDS=60
+      - ALERT_WEBHOOK_URL=${ALERT_WEBHOOK_URL:-}
+    volumes:
+      - ./data:/app/data
+    command: python data/stream_simulator.py
+    restart: unless-stopped
+
+  speed:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ueris_speed
+    depends_on:
+      batch:
+        condition: service_completed_successfully
+      mongodb:
+        condition: service_healthy
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017/
+      - DB_NAME=urban_env_db
+      - STREAM_OUTPUT_DIR=/app/data/streaming_input
+      - POLL_INTERVAL_SECONDS=5
+      - ALERT_WEBHOOK_URL=${ALERT_WEBHOOK_URL:-}
+      - PYSPARK_PYTHON=/usr/local/bin/python3
+    volumes:
+      - ./data:/app/data
+    command: python speed_layer/speed_processing.py
+    restart: unless-stopped
+
+  serving:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ueris_serving
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017/
+      - DB_NAME=urban_env_db
+      - PORT=5000
+      - FRESHNESS_WINDOW_MIN=30
+      - API_KEY=${API_KEY:-}
+    volumes:
+      - ./dashboard:/app/dashboard
+    ports:
+      - "5000:5000"
+    command: python serving_layer/app.py
+    restart: unless-stopped
+
+volumes:
+  mongo_data:
