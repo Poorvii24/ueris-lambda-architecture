@@ -1129,7 +1129,7 @@
       </div>
     </div>
     <div class="hr2">
-      <a class="hbtn" href="http://localhost:5000/api/export/csv" download>⬇ Export CSV</a>
+      <a class="hbtn" href="/api/export/csv" download>⬇ Export CSV</a>
       <span id="clk" style="font-family:var(--f2);font-size:13px;color:var(--txt2)">—</span>
       <div class="lpill" id="lpill">
         <div class="ldot"></div><span id="ltxt">Connecting</span>
@@ -1434,7 +1434,7 @@
 
     setInterval(() => { document.getElementById('clk').textContent = new Date().toLocaleTimeString('en-IN', { hour12: false }) }, 1000);
 
-    const API = window.location.origin;
+    const API = "";
     const MO = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     let CHS = {}, CD = {}, SEL = null, ALERTS = [], FLAGS = { cmp: false, hist: false, fc: false, corr: false, rnk: false };
 
@@ -1461,7 +1461,7 @@
 
     async function fetchAll() {
       try {
-        const d = await (await fetch(`${API}/cities`)).json();
+        const d = await (await fetch(`/api/cities`)).json();
         document.getElementById('offl').style.display = 'none';
         document.getElementById('ltxt').textContent = 'Live';
         document.getElementById('lpill').style.background = 'rgba(34,212,122,.07)';
@@ -1514,7 +1514,7 @@
     }
 
     async function fetchDetail(city) {
-      try { const d = await (await fetch(`${API}/city/${encodeURIComponent(city)}`)).json(); if (d.status === 'ok') renderDetail(d) } catch (e) { }
+      try { const d = await (await fetch(`/api/city/${encodeURIComponent(city)}`)).json(); if (d.status === 'ok') renderDetail(d) } catch (e) { }
     }
 
     function renderDetail(d) {
@@ -1578,7 +1578,7 @@
       FLAGS.rnk = true;
       const wrap = document.getElementById('rnk-wrap');
       try {
-        const d = await (await fetch(`${API}/ranking`)).json();
+        const d = await (await fetch(`/api/ranking`)).json();
         if (!d.ranking?.length) { wrap.innerHTML = '<div class="es">No ranking data</div>'; return }
         const medals = ['🥇', '🥈', '🥉'];
         wrap.innerHTML = `<div style="background:var(--s1);border:1px solid var(--b1);border-radius:18px;overflow:hidden">
@@ -1621,7 +1621,7 @@
       await new Promise(r => setTimeout(r, 100));
       for (const c of cities) {
         try {
-          const d = await (await fetch(`${API}/forecast/${encodeURIComponent(c.city)}`)).json();
+          const d = await (await fetch(`/api/forecast/${encodeURIComponent(c.city)}`)).json();
           const fc = d.forecast || [];
           if (!fc.length) continue;
           mk('fc-' + c.city, 'line', {
