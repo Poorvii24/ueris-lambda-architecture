@@ -16,3 +16,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 RUN mkdir -p data/historical data/streaming_input data/checkpoint dashboard
+
+EXPOSE 5000
+
+CMD ["python", "serving_layer/app.py"]
