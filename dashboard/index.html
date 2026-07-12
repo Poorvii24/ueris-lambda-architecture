@@ -1498,7 +1498,7 @@
     <div class="cm">
       <div class="mx"><div class="ml">AQI</div><div class="mv" style="color:${rc(r)}">${c.current_aqi?.toFixed(0) || '—'}</div></div>
       <div class="mx"><div class="ml">Temp °C</div><div class="mv">${c.current_temp?.toFixed(1) || '—'}</div></div>
-      <div class="mx"><div class="ml">Humidity</div><div class="mv">${c.current_humidity?.toFixed(0) || '—'}%</div></div>
+      <div class="mx"><div class="ml">Humidity</div><div class="mv">${(c.current_humidity ?? c.avg_humidity)?.toFixed(0) || '—'}%</div></div>
       <div class="mx"><div class="ml">Health</div><div class="mv" style="color:var(--ok)">${c.health_score?.toFixed(0) || '—'}</div></div>
     </div>
     <div class="ub"><div class="ubf" style="width:${Math.min(u, 100)}%;--ug:${g}"></div></div>
@@ -1556,7 +1556,7 @@
       <div class="ds"><div class="dsv" style="background:${g};-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">${u?.toFixed(2) || '—'}</div><div class="dsl">Current USI</div></div>
       <div class="ds"><div class="dsv" style="color:${rc(risk)}">${rt.aqi?.toFixed(0) ?? st.avg_aqi?.toFixed(0) ?? '—'}</div><div class="dsl">AQI Live</div></div>
       <div class="ds"><div class="dsv">${rt.temperature?.toFixed(1) ?? st.avg_temp?.toFixed(1) ?? '—'}°C</div><div class="dsl">Temperature</div></div>
-      <div class="ds"><div class="dsv">${rt.humidity?.toFixed(0) ?? '—'}%</div><div class="dsl">Humidity</div></div>
+      <div class="ds"><div class="dsv">${(rt.humidity ?? st.avg_humidity)?.toFixed(0) || '—'}%</div><div class="dsl">Humidity</div></div>
       <div class="ds"><div class="dsv" style="color:var(--warn)">${st.avg_usi?.toFixed(2) || '—'}</div><div class="dsl">Hist Avg USI</div></div>
       <div class="ds"><div class="dsv" style="color:var(--a4)">${st.max_usi?.toFixed(2) || '—'}</div><div class="dsl">Peak USI</div></div>
     </div>

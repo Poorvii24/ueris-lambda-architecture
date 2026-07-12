@@ -1,12 +1,7 @@
 FROM python:3.11-slim
 
-# Java is required by PySpark
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    default-jdk-headless curl && \
-    rm -rf /var/lib/apt/lists/*
-
-ENV JAVA_HOME=/usr/lib/jvm/default-java
-ENV PATH=$JAVA_HOME/bin:$PATH
+# No Java needed — PySpark runs locally only
+# Server only runs Flask + background live data worker
 
 WORKDIR /app
 
@@ -19,4 +14,5 @@ RUN mkdir -p data/historical data/streaming_input data/checkpoint dashboard
 
 EXPOSE 5000
 
-CMD ["python", "serving_layer/app.py"]
+# Use gunicorn for production
+CMD ["gunicorn", "-w", "1", "--threads", "4", "-b", "0.0.0.0:5000", "--timeout", "120", "serving_layer.app:app"]

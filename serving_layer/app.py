@@ -137,6 +137,7 @@ def enrich_city(batch: dict, rt: dict, rank: int) -> dict:
         "avg_usi":           avg_u,
         "avg_aqi":           batch.get("stats", {}).get("avg_aqi"),
         "avg_temp":          batch.get("stats", {}).get("avg_temp"),
+        "avg_humidity":      batch.get("stats", {}).get("avg_humidity"),
         "max_usi":           batch.get("stats", {}).get("max_usi"),
         "health_score":      health_score(avg_u),
         "health_rank":       rank,
@@ -534,3 +535,151 @@ if __name__ == "__main__":
     print(f"  MongoDB   : {MONGO_URI[:40]}...")
     print(f"{'='*60}\n")
     app.run(debug=False, host="0.0.0.0", port=port)
+
+
+# ── Background Live Data Worker ────────────────────────────────────────────────
+"""
+Production Speed Layer: runs as a background thread inside Flask/Gunicorn.
+Fetches real environmental data from Open-Meteo (no key) + WAQI (free token)
+every 60 seconds and writes to MongoDB Atlas realtime_views collection.
+
+This replaces stream_simulator.py + speed_processing.py on the server.
+PySpark streaming is used only in local/on-premise deployments.
+"""
+
+import threading
+import requests as _requests
+import math as _math
+
+WAQI_TOKEN = os.environ.get("WAQI_TOKEN", "demo")
+LIVE_FETCH_INTERVAL = int(os.environ.get("LIVE_FETCH_INTERVAL", 60))
+
+CITIES_COORDS = {
+    "Ahmedabad":         {"lat": 23.0225, "lon": 72.5714},
+    "Aizawl":            {"lat": 23.7271, "lon": 92.7176},
+    "Amaravati":         {"lat": 16.5730, "lon": 80.3582},
+    "Amritsar":          {"lat": 31.6340, "lon": 74.8723},
+    "Bengaluru":         {"lat": 12.9716, "lon": 77.5946},
+    "Bhopal":            {"lat": 23.2599, "lon": 77.4126},
+    "Brajrajnagar":      {"lat": 21.8167, "lon": 83.9167},
+    "Chandigarh":        {"lat": 30.7333, "lon": 76.7794},
+    "Chennai":           {"lat": 13.0827, "lon": 80.2707},
+    "Coimbatore":        {"lat": 11.0168, "lon": 76.9558},
+    "Delhi":             {"lat": 28.6139, "lon": 77.2090},
+    "Ernakulam":         {"lat":  9.9816, "lon": 76.2999},
+    "Gurugram":          {"lat": 28.4595, "lon": 77.0266},
+    "Guwahati":          {"lat": 26.1445, "lon": 91.7362},
+    "Hyderabad":         {"lat": 17.3850, "lon": 78.4867},
+    "Jaipur":            {"lat": 26.9124, "lon": 75.7873},
+    "Jorapokhar":        {"lat": 23.6800, "lon": 86.4200},
+    "Kochi":             {"lat":  9.9312, "lon": 76.2673},
+    "Kolkata":           {"lat": 22.5726, "lon": 88.3639},
+    "Lucknow":           {"lat": 26.8467, "lon": 80.9462},
+    "Mumbai":            {"lat": 19.0760, "lon": 72.8777},
+    "Patna":             {"lat": 25.5941, "lon": 85.1376},
+    "Shillong":          {"lat": 25.5788, "lon": 91.8933},
+    "Talcher":           {"lat": 20.9500, "lon": 85.2333},
+    "Thiruvananthapuram":{"lat":  8.5241, "lon": 76.9366},
+    "Visakhapatnam":     {"lat": 17.6868, "lon": 83.2185},
+}
+
+
+def _fetch_weather(lat: float, lon: float) -> tuple:
+    """Fetch real temperature + humidity from Open-Meteo (no API key needed)."""
+    try:
+        url = (
+            f"https://api.open-meteo.com/v1/forecast"
+            f"?latitude={lat}&longitude={lon}"
+            f"&current=temperature_2m,relative_humidity_2m"
+            f"&timezone=Asia/Kolkata"
+        )
+        r = _requests.get(url, timeout=8)
+        c = r.json()["current"]
+        return float(c["temperature_2m"]), float(c["relative_humidity_2m"])
+    except Exception:
+        return None, None
+
+
+def _fetch_aqi(city: str, lat: float, lon: float) -> float | None:
+    """Fetch real AQI — WAQI first, Open-Meteo Air Quality as fallback."""
+    # Try WAQI
+    if WAQI_TOKEN and WAQI_TOKEN != "demo":
+        try:
+            url = f"https://api.waqi.info/feed/geo:{lat};{lon}/?token={WAQI_TOKEN}"
+            r   = _requests.get(url, timeout=8)
+            d   = r.json()
+            if d.get("status") == "ok":
+                return float(d["data"]["aqi"])
+        except Exception:
+            pass
+    # Fallback: Open-Meteo Air Quality
+    try:
+        url = (
+            f"https://air-quality-api.open-meteo.com/v1/air-quality"
+            f"?latitude={lat}&longitude={lon}"
+            f"&current=us_aqi&timezone=Asia/Kolkata"
+        )
+        r   = _requests.get(url, timeout=8)
+        aqi = r.json().get("current", {}).get("us_aqi")
+        if aqi is not None:
+            return float(aqi)
+    except Exception:
+        pass
+    return None
+
+
+def _live_fetch_loop():
+    """Background thread: fetch all cities and upsert into MongoDB Atlas."""
+    import time
+    print("[LiveWorker] Started — fetching every", LIVE_FETCH_INTERVAL, "seconds")
+    while True:
+        try:
+            db, client = get_db()
+            col        = db["realtime_views"]
+            success    = 0
+            for city, coords in CITIES_COORDS.items():
+                lat, lon     = coords["lat"], coords["lon"]
+                temp, humidity = _fetch_weather(lat, lon)
+                aqi            = _fetch_aqi(city, lat, lon)
+                if temp is None or aqi is None:
+                    continue
+                usi  = compute_usi(aqi, temp, humidity or 50)
+                risk = classify_risk(usi)
+                doc  = {
+                    "city":        city,
+                    "aqi":         round(aqi, 1),
+                    "temperature": round(temp, 1),
+                    "humidity":    round(float(humidity), 1) if humidity else None,
+                    "usi":         usi,
+                    "risk_level":  risk,
+                    "is_anomaly":  aqi > 200,
+                    "anomaly_method": "threshold",
+                    "updated_at":  datetime.now(timezone.utc).isoformat(),
+                    "data_source": "Open-Meteo + WAQI (realtime)",
+                }
+                col.update_one({"city": city}, {"$set": doc}, upsert=True)
+                success += 1
+                time.sleep(0.5)   # small delay to avoid rate-limiting
+            client.close()
+            print(f"[LiveWorker] Updated {success}/{len(CITIES_COORDS)} cities")
+        except Exception as e:
+            print(f"[LiveWorker] Error: {e}")
+        time.sleep(LIVE_FETCH_INTERVAL)
+
+
+def start_live_worker():
+    """Start background live data thread (daemon = stops when Flask exits)."""
+    t = threading.Thread(target=_live_fetch_loop, daemon=True, name="LiveWorker")
+    t.start()
+    return t
+
+
+# Start worker when module loads (both `python app.py` and gunicorn)
+_worker_started = False
+def _init_worker():
+    global _worker_started
+    if not _worker_started:
+        _worker_started = True
+        start_live_worker()
+
+_init_worker()
