@@ -1,0 +1,19 @@
+# =============================================================================
+# UERIS — Local Development Dependencies
+# =============================================================================
+# These are NOT installed on the production server (Render).
+# Required only for running the batch layer and speed layer locally.
+#
+# Install:
+#   pip install -r requirements.txt -r requirements-local.txt
+# =============================================================================
+
+# ── PySpark (batch layer + speed layer, local only) ───────────────────────────
+pyspark>=3.4.0
+
+# ── Kafka (enterprise streaming mode, local only) ─────────────────────────────
+confluent-kafka>=2.3.0
+
+# ── Development tools ─────────────────────────────────────────────────────────
+pytest>=7.4.0
+pytest-mock>=3.12.0

@@ -1,18 +1,28 @@
-# Core API
+# =============================================================================
+# UERIS — Python Dependencies
+# =============================================================================
+# Production server (Render):
+#   pip install -r requirements.txt
+#
+# Local development (full stack including PySpark):
+#   pip install -r requirements.txt -r requirements-local.txt
+# =============================================================================
+
+# ── Core API ──────────────────────────────────────────────────────────────────
 flask>=3.0.0
 flask-cors>=4.0.0
 gunicorn>=21.2.0
 
-# Database
+# ── Database ──────────────────────────────────────────────────────────────────
 pymongo>=4.6.0
-dnspython>=2.6.0
+dnspython>=2.6.0          # required for mongodb+srv:// URIs
 
-# Live data fetching (background worker)
+# ── Live data fetching (background worker + simulator) ────────────────────────
 requests>=2.31.0
 
-# ML (for future Isolation Forest phase)
+# ── ML (Isolation Forest anomaly detection) ───────────────────────────────────
 scikit-learn>=1.4.0
 numpy>=1.26.0
 
-# Note: pyspark and confluent-kafka are LOCAL ONLY tools
-# They are NOT installed on Render — batch layer runs locally
+# ── Kafka (enterprise streaming mode) ─────────────────────────────────────────
+confluent-kafka>=2.3.0

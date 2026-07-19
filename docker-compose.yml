@@ -1,114 +1,346 @@
-version: "3.9"
-
-# ── UERIS — Urban Environmental Risk Intelligence System ──────────────────────
-# One-command startup:  docker-compose up
+# =============================================================================
+# UERIS — Urban Environmental Risk Intelligence System
+# Docker Compose — Full Enterprise Stack
 #
 # Services:
-#   mongodb       — database (batch_views + realtime_views)
-#   batch         — runs batch_processing.py once on startup
-#   simulator     — stream_simulator.py (fetches live data every 60s)
-#   speed         — speed_processing.py (processes new readings every 5s)
-#   serving       — app.py Flask API + dashboard on http://localhost:5000
+#   zookeeper     Kafka coordination (port 2181)
+#   kafka         Apache Kafka broker (port 9092, 29092 external)
+#   kafka-ui      Kafka UI for monitoring (port 8080)
+#   mongodb       MongoDB (port 27017)
+#   simulator     Stream simulator (simulation OR kafka mode)
+#   speed-layer   PySpark file consumer (simulation mode)
+#   spark-kafka   PySpark Kafka consumer (kafka mode)
+#   app           Flask serving layer + dashboard (port 5000)
 #
-# Environment variables (override in .env file):
-#   WAQI_TOKEN          your WAQI API token
-#   ALERT_WEBHOOK_URL   Slack/Teams webhook for anomaly alerts
-#   API_KEY             optional API key auth on /api/* endpoints
-# ─────────────────────────────────────────────────────────────────────────────
+# Usage:
+#   # Full stack with Kafka mode:
+#   docker-compose up
+#
+#   # Simulation mode only (no Kafka):
+#   docker-compose up mongodb simulator speed-layer app
+#
+#   # Override streaming mode:
+#   STREAMING_MODE=kafka docker-compose up
+#
+# Environment file:
+#   Copy .env.example to .env and fill in your values before running.
+# =============================================================================
 
+version: "3.9"
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  ueris-net:
+    driver: bridge
+    name: ueris-network
+
+# =============================================================================
+# Volumes
+# =============================================================================
+volumes:
+  mongodb-data:
+    name: ueris-mongodb-data
+  kafka-data:
+    name: ueris-kafka-data
+  zookeeper-data:
+    name: ueris-zookeeper-data
+  zookeeper-log:
+    name: ueris-zookeeper-log
+  streaming-input:
+    name: ueris-streaming-input
+  dlq-data:
+    name: ueris-dlq-data
+
+# =============================================================================
+# Services
+# =============================================================================
 services:
+
+  # ---------------------------------------------------------------------------
+  # Zookeeper (required by Kafka)
+  # ---------------------------------------------------------------------------
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.0
+    container_name: ueris-zookeeper
+    hostname: zookeeper
+    restart: unless-stopped
+    networks:
+      - ueris-net
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_SYNC_LIMIT: 2
+      ZOOKEEPER_DATA_DIR: /var/lib/zookeeper/data
+      ZOOKEEPER_LOG_DIR: /var/lib/zookeeper/log
+    volumes:
+      - zookeeper-data:/var/lib/zookeeper/data
+      - zookeeper-log:/var/lib/zookeeper/log
+    healthcheck:
+      test: ["CMD", "zkServer.sh", "status"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  # ---------------------------------------------------------------------------
+  # Apache Kafka Broker
+  # ---------------------------------------------------------------------------
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    container_name: ueris-kafka
+    hostname: kafka
+    restart: unless-stopped
+    depends_on:
+      zookeeper:
+        condition: service_started
+    networks:
+      - ueris-net
+    ports:
+      - "9092:9092"     # Internal (Docker network)
+      - "29092:29092"   # External (host machine)
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092,EXTERNAL://localhost:29092
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_LOG_RETENTION_HOURS: 24
+      KAFKA_LOG_RETENTION_BYTES: 1073741824   # 1GB
+      KAFKA_LOG_SEGMENT_BYTES: 104857600       # 100MB
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_NUM_PARTITIONS: 3
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 1
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 15s
+      timeout: 15s
+      retries: 10
+      start_period: 60s
+
+  # ---------------------------------------------------------------------------
+  # Kafka Topic Initialiser (one-shot container)
+  # Creates required topics before consumers start
+  # Uses sh (not bash) - cp-kafka:7.6.0 is a minimal JVM image
+  # ---------------------------------------------------------------------------
+  kafka-init:
+    image: confluentinc/cp-kafka:7.6.0
+    container_name: ueris-kafka-init
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - ueris-net
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo 'Waiting for Kafka to be ready...'
+        sleep 10
+        kafka-topics --bootstrap-server kafka:9092 \
+          --create --if-not-exists \
+          --topic ueris.env.readings \
+          --partitions 3 \
+          --replication-factor 1 \
+          --config retention.ms=86400000
+        kafka-topics --bootstrap-server kafka:9092 \
+          --create --if-not-exists \
+          --topic ueris.env.dlq \
+          --partitions 1 \
+          --replication-factor 1 \
+          --config retention.ms=604800000
+        echo 'Topics created successfully:'
+        kafka-topics --bootstrap-server kafka:9092 --list
+    restart: "no"
+
+  # ---------------------------------------------------------------------------
+  # Kafka UI (monitoring dashboard)
+  # Access at http://localhost:8080
+  # ---------------------------------------------------------------------------
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: ueris-kafka-ui
+    restart: unless-stopped
+    depends_on:
+      kafka:
+        condition: service_started
+    networks:
+      - ueris-net
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: ueris-local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+
+  # ---------------------------------------------------------------------------
+  # MongoDB (local development; use Atlas URI in production)
+  # ---------------------------------------------------------------------------
   mongodb:
     image: mongo:7.0
-    container_name: ueris_mongo
+    container_name: ueris-mongodb
+    hostname: mongodb
     restart: unless-stopped
+    networks:
+      - ueris-net
     ports:
       - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: urban_env_db
     volumes:
-      - mongo_data:/data/db
+      - mongodb-data:/data/db
     healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/urban_env_db --quiet
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 20s
 
-  batch:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: ueris_batch
-    depends_on:
-      mongodb:
-        condition: service_healthy
-    environment:
-      - MONGO_URI=mongodb://mongodb:27017/
-      - DB_NAME=urban_env_db
-      - HISTORICAL_CSV=/app/data/historical/city_day.csv
-      - PYSPARK_PYTHON=/usr/local/bin/python3
-    volumes:
-      - ./data:/app/data
-    command: python batch_layer/batch_processing.py
-    restart: "no"   # run once, exit
-
+  # ---------------------------------------------------------------------------
+  # Stream Simulator
+  # STREAMING_MODE=simulation : writes JSON files (default)
+  # STREAMING_MODE=kafka      : publishes to Kafka
+  # ---------------------------------------------------------------------------
   simulator:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: ueris_simulator
+    container_name: ueris-simulator
+    restart: unless-stopped
     depends_on:
-      batch:
+      mongodb:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      kafka-init:
         condition: service_completed_successfully
-    environment:
-      - WAQI_TOKEN=${WAQI_TOKEN:-demo}
-      - STREAM_OUTPUT_DIR=/app/data/streaming_input
-      - FETCH_INTERVAL_SECONDS=60
-      - ALERT_WEBHOOK_URL=${ALERT_WEBHOOK_URL:-}
+    networks:
+      - ueris-net
     volumes:
-      - ./data:/app/data
+      - streaming-input:/app/data/streaming_input
+      - dlq-data:/app/data/dlq
+    environment:
+      # In docker-compose, Kafka is always running — use kafka mode by default.
+      # Override with STREAMING_MODE=simulation in .env for file-based mode.
+      STREAMING_MODE:       ${STREAMING_MODE:-kafka}
+      MONGO_URI:            ${MONGO_URI:-mongodb://mongodb:27017/}
+      KAFKA_BROKER:         kafka:9092
+      KAFKA_TOPIC:          ${KAFKA_TOPIC:-ueris.env.readings}
+      WAQI_TOKEN:           ${WAQI_TOKEN:-demo}
+      FETCH_INTERVAL_SECONDS: ${FETCH_INTERVAL_SECONDS:-60}
+      ALERT_WEBHOOK_URL:    ${ALERT_WEBHOOK_URL:-}
+      LOG_LEVEL:            ${LOG_LEVEL:-INFO}
+      UERIS_COMPONENT:      simulator
     command: python data/stream_simulator.py
-    restart: unless-stopped
 
-  speed:
+  # ---------------------------------------------------------------------------
+  # Speed Layer — PySpark File Consumer (simulation mode)
+  # Polls data/streaming_input/ every 5 seconds
+  # ---------------------------------------------------------------------------
+  speed-layer:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: ueris_speed
+    container_name: ueris-speed-layer
+    restart: unless-stopped
     depends_on:
-      batch:
-        condition: service_completed_successfully
       mongodb:
         condition: service_healthy
-    environment:
-      - MONGO_URI=mongodb://mongodb:27017/
-      - DB_NAME=urban_env_db
-      - STREAM_OUTPUT_DIR=/app/data/streaming_input
-      - POLL_INTERVAL_SECONDS=5
-      - ALERT_WEBHOOK_URL=${ALERT_WEBHOOK_URL:-}
-      - PYSPARK_PYTHON=/usr/local/bin/python3
+      simulator:
+        condition: service_started
+    networks:
+      - ueris-net
     volumes:
-      - ./data:/app/data
+      - streaming-input:/app/data/streaming_input
+      - dlq-data:/app/data/dlq
+    environment:
+      STREAMING_MODE: simulation
+      MONGO_URI:      ${MONGO_URI:-mongodb://mongodb:27017/}
+      LOG_LEVEL:      ${LOG_LEVEL:-INFO}
+      UERIS_COMPONENT: speed-layer
+      JAVA_HOME:      /usr/lib/jvm/default-java
     command: python speed_layer/speed_processing.py
-    restart: unless-stopped
+    profiles:
+      - simulation
 
-  serving:
+  # ---------------------------------------------------------------------------
+  # Speed Layer — Spark Structured Streaming + Kafka (kafka mode)
+  # Consumes from Kafka topic via Spark readStream
+  # ---------------------------------------------------------------------------
+  spark-kafka:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: ueris_serving
+    container_name: ueris-spark-kafka
+    restart: unless-stopped
     depends_on:
       mongodb:
         condition: service_healthy
-    environment:
-      - MONGO_URI=mongodb://mongodb:27017/
-      - DB_NAME=urban_env_db
-      - PORT=5000
-      - FRESHNESS_WINDOW_MIN=30
-      - API_KEY=${API_KEY:-}
+      kafka:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+    networks:
+      - ueris-net
     volumes:
-      - ./dashboard:/app/dashboard
+      - dlq-data:/app/data/dlq
+    environment:
+      STREAMING_MODE:           kafka
+      MONGO_URI:                ${MONGO_URI:-mongodb://mongodb:27017/}
+      KAFKA_BROKER:             kafka:9092
+      KAFKA_TOPIC:              ${KAFKA_TOPIC:-ueris.env.readings}
+      KAFKA_CONSUMER_GROUP:     ${KAFKA_CONSUMER_GROUP:-ueris-speed-layer}
+      SPARK_TRIGGER_INTERVAL_S: ${SPARK_TRIGGER_INTERVAL_S:-10}
+      LOG_LEVEL:                ${LOG_LEVEL:-INFO}
+      UERIS_COMPONENT:          spark-kafka
+      JAVA_HOME:                /usr/lib/jvm/default-java
+    command: python speed_layer/spark_kafka_consumer.py
+    profiles:
+      - kafka
+
+  # ---------------------------------------------------------------------------
+  # Flask Serving Layer + Dashboard
+  # Access at http://localhost:5000
+  # ---------------------------------------------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ueris-app
+    restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - ueris-net
     ports:
       - "5000:5000"
-    command: python serving_layer/app.py
-    restart: unless-stopped
-
-volumes:
-  mongo_data:
+    environment:
+      MONGO_URI:              ${MONGO_URI:-mongodb://mongodb:27017/}
+      DB_NAME:                ${DB_NAME:-urban_env_db}
+      PORT:                   5000
+      WAQI_TOKEN:             ${WAQI_TOKEN:-demo}
+      LIVE_FETCH_INTERVAL:    ${LIVE_FETCH_INTERVAL:-60}
+      FRESHNESS_WINDOW_MIN:   ${FRESHNESS_WINDOW_MIN:-30}
+      ALERT_WEBHOOK_URL:      ${ALERT_WEBHOOK_URL:-}
+      LOG_LEVEL:              ${LOG_LEVEL:-INFO}
+      UERIS_COMPONENT:        serving-layer
+    command: >
+      gunicorn -w 1 --threads 4 -b 0.0.0.0:5000
+      --timeout 120 --access-logfile - --error-logfile -
+      serving_layer.app:app
+    healthcheck:
+      test: curl -f http://localhost:5000/api/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s

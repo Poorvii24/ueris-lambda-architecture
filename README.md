@@ -1,240 +1,340 @@
 # UERIS — Urban Environmental Risk Intelligence System
 
-> Production-grade **Lambda Architecture** for real-time air quality monitoring across 26 Indian cities, with ML anomaly detection, forecasting, and correlation analysis.
+> Enterprise-grade Environmental Intelligence Platform built on Lambda Architecture,
+> Apache Kafka, Apache Spark, MongoDB Atlas, and Flask.
+
+🌐 **Live Demo**: [ueris-dashboard.onrender.com](https://ueris-dashboard.onrender.com)
 
 ---
 
-Live demo: https://ueris-dashboard.onrender.com/
-## Architecture
+## Architecture Overview
 
 ```
-╔══════════════════════════════════════════════════════════════════╗
-║                      LAMBDA ARCHITECTURE                        ║
-╠══════════════════════════════════════════════════════════════════╣
-║                                                                  ║
-║  BATCH LAYER      [Kaggle CSV] → PySpark → batch_views          ║
-║  (Accuracy)        • USI computation for all records            ║
-║                    • Isolation Forest model per city            ║
-║                    • Pearson correlation matrix                  ║
-║                    • 12-month USI forecast                       ║
-║                    • City health ranking                         ║
-║                              ↘                                   ║
-║  SERVING LAYER    Flask REST API → Lambda Merge → Dashboard      ║
-║  (Query)           realtime-priority | batch-fallback            ║
-║                              ↗                                   ║
-║  SPEED LAYER      [Open-Meteo+WAQI] → Stream Sim → PySpark      ║
-║  (Freshness)       • Loads batch-trained IF model per city      ║
-║                    • ML anomaly scoring on live readings         ║
-║                    • Alert webhooks on anomaly detection         ║
-╚══════════════════════════════════════════════════════════════════╝
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    UERIS LAMBDA ARCHITECTURE                            │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│   DATA SOURCES                                                          │
+│   ┌──────────────────┐    ┌──────────────────────────────────────┐    │
+│   │ Kaggle Dataset   │    │ Live APIs                            │    │
+│   │ city_day.csv     │    │ Open-Meteo (temp/humidity)           │    │
+│   │ 24,850 records   │    │ WAQI (AQI)                           │    │
+│   │ 26 Indian cities │    │ Open-Meteo AQ (AQI fallback)         │    │
+│   └────────┬─────────┘    └──────────────┬───────────────────────┘    │
+│            │                             │                             │
+│   ─────────────────────── BATCH PATH ──────────────────────────────   │
+│            │                                                           │
+│   ┌────────▼─────────────────────────────────────────────────────┐    │
+│   │  batch_layer/batch_processing.py                             │    │
+│   │  PySpark (local) · Runs once (or nightly)                    │    │
+│   │  • USI computation per city per day                          │    │
+│   │  • Isolation Forest per city (trained on 2015-2020)          │    │
+│   │  • Pearson correlation matrices                               │    │
+│   │  • 12-month USI forecasts (seasonal + linear)                │    │
+│   │  • City health rankings                                       │    │
+│   │  • Monthly/yearly trend aggregations                          │    │
+│   └────────────────────────┬─────────────────────────────────────┘    │
+│                            │                                           │
+│   ─────────────────────── SPEED PATH ──────────────────────────────   │
+│                            │                                           │
+│   ┌──────────────────┐     │                                          │
+│   │ stream_simulator │     │                                          │
+│   │ data/stream_     │     │                                          │
+│   │ simulator.py     │     │                                          │
+│   │                  │     │                                          │
+│   │ SIMULATION MODE  │     │                                          │
+│   │ writes .json     │     │                                          │
+│   │ files            │     │                                          │
+│   │                  │     │                                          │
+│   │ KAFKA MODE       │     │                                          │
+│   │ publishes to     │     │                                          │
+│   │ Kafka topic      │     │                                          │
+│   └──────┬──────┬────┘     │                                          │
+│          │      │          │                                           │
+│    SIM   │      │ KAFKA    │                                           │
+│    MODE  │      │  MODE    │                                           │
+│          │      │          │                                           │
+│   ┌──────▼──┐ ┌─▼──────────────────────┐                             │
+│   │ speed_  │ │ Apache Kafka           │                             │
+│   │ process-│ │ Topic: ueris.env.      │                             │
+│   │ ing.py  │ │ readings               │                             │
+│   │ PySpark │ │ DLQ:   ueris.env.dlq  │                             │
+│   │ file    │ └─────────┬──────────────┘                             │
+│   │ polling │           │                                             │
+│   └────┬────┘ ┌─────────▼──────────────┐                             │
+│        │      │ spark_kafka_consumer.py│                             │
+│        │      │ Spark Structured       │                             │
+│        │      │ Streaming              │                             │
+│        │      │ + Isolation Forest     │                             │
+│        │      └─────────┬──────────────┘                             │
+│        │                │                                             │
+│   ─────────────────── SERVING PATH ────────────────────────────────  │
+│        │                │                                             │
+│   ┌────▼────────────────▼──────────────────────┐                     │
+│   │          MongoDB Atlas                      │                     │
+│   │  batch_views    (26 docs — historical)      │                     │
+│   │  realtime_views (26 docs — live)            │                     │
+│   │  correlations   (26 docs — Pearson matrix)  │                     │
+│   │  data_quality   (26 docs — coverage stats)  │                     │
+│   └───────────────────────┬─────────────────────┘                     │
+│                           │                                            │
+│   ┌───────────────────────▼─────────────────────┐                     │
+│   │  serving_layer/app.py (Flask + Gunicorn)    │                     │
+│   │  11 REST API endpoints                       │                     │
+│   │  Background LiveWorker thread (Render)       │                     │
+│   │  Lambda merge: realtime ?? batch fallback    │                     │
+│   └───────────────────────┬─────────────────────┘                     │
+│                           │                                            │
+│   ┌───────────────────────▼─────────────────────┐                     │
+│   │  dashboard/index.html                        │                     │
+│   │  9 tabs: Overview · Ranking · Forecast ·    │                     │
+│   │  Compare · Trends · Correlation · Alerts ·  │                     │
+│   │  Data Quality · Architecture                 │                     │
+│   └─────────────────────────────────────────────┘                     │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Tech Stack
-
-| Component        | Technology                                      |
-|-----------------|-------------------------------------------------|
-| Batch processing | Apache PySpark (local mode)                    |
-| ML / Analytics   | scikit-learn Isolation Forest, Pearson corr.   |
-| Speed layer      | PySpark micro-batch + file simulation           |
-| Storage          | MongoDB (batch_views + realtime_views)          |
-| Serving layer    | Flask + Flask-CORS                              |
-| Dashboard        | Vanilla JS + Chart.js 4.4                       |
-| Historical data  | Kaggle — Air Quality Data in India (2015–2020) |
-| Live weather     | Open-Meteo API (free, no key)                  |
-| Live AQI         | WAQI API (free token) + Open-Meteo AQ fallback |
-| Containerisation | Docker + Docker Compose                         |
-| Tests            | pytest (unit + integration)                     |
-
----
-
-## USI Formula
+## Enterprise Streaming Architecture (Phase 1)
 
 ```
-USI = ( 0.5 × AQI_norm  +  0.3 × Temp_norm  +  0.2 × Hum_norm ) × 100
-
-  AQI_norm  = min(AQI / 300, 1.0)           WHO hazardous threshold
-  Temp_norm = clamp((T − 15) / 25, 0, 1)    15°C baseline; 40°C = max stress
-  Hum_norm  = |H − 50| / 50                 50% RH = comfort midpoint
-
-Weights: 50% AQI (WHO 2021) · 30% Temp (Lancet 2021) · 20% Humidity
-Risk bands: Low(<20) · Moderate(20-39) · High(40-59) · Very High(60-79) · Severe(≥80)
+┌─────────────────────────────────────────────────────────────┐
+│              STREAMING ENGINE — DUAL MODE                    │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  SIMULATION MODE (default, STREAMING_MODE=simulation)       │
+│                                                             │
+│  Open-Meteo + WAQI                                          │
+│       ↓                                                     │
+│  stream_simulator.py → streaming/schema.py (validate)       │
+│       ↓                                                     │
+│  data/streaming_input/*.json (one file per reading)         │
+│       ↓ (polled every 5s)                                   │
+│  speed_processing.py → PySpark createDataFrame              │
+│       ↓                                                     │
+│  USI recompute + Isolation Forest                           │
+│       ↓                                                     │
+│  MongoDB realtime_views (upsert, 3x retry)                  │
+│       ↓ (failed records)                                    │
+│  streaming/dlq_handler.py → data/dlq/*.jsonl                │
+│                                                             │
+│  KAFKA MODE (STREAMING_MODE=kafka)                          │
+│                                                             │
+│  Open-Meteo + WAQI                                          │
+│       ↓                                                     │
+│  stream_simulator.py → streaming/producer.py                │
+│       ↓ (5x retry + exponential backoff)                    │
+│  Apache Kafka → ueris.env.readings (3 partitions)           │
+│       ↓ (failed after retries)                              │
+│  ueris.env.dlq + data/dlq/*.jsonl                           │
+│       ↓                                                     │
+│  spark_kafka_consumer.py → Spark readStream from Kafka      │
+│       ↓                                                     │
+│  USI recompute (Spark SQL) + Isolation Forest               │
+│       ↓                                                     │
+│  MongoDB realtime_views (upsert)                            │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
 ```
-
----
-
-## ML Features
-
-| Feature | Method | Where |
-|---|---|---|
-| Anomaly detection | Isolation Forest (per city, contamination=0.05) | Batch trains → Speed applies |
-| Forecasting | Linear trend + seasonal blending (12 months) | Batch layer |
-| Correlation | Pearson r matrix (AQI × Temp × Humidity × USI) | Batch layer |
-| Health ranking | Normalised inverse-USI score (0–100) | Batch layer |
 
 ---
 
 ## Project Structure
 
 ```
-urban-env-risk/
-├── data/
-│   ├── historical/city_day.csv      ← Kaggle dataset (download separately)
-│   ├── streaming_input/             ← Speed layer input (auto-created)
-│   └── checkpoint/                  ← PySpark checkpoint (auto-created)
+urban_env_risk/
+│
 ├── batch_layer/
-│   └── batch_processing.py          ← STEP 1: Run once
-├── data/
-│   └── stream_simulator.py          ← STEP 2: Run continuously
+│   └── batch_processing.py          # PySpark batch layer (run locally)
+│
 ├── speed_layer/
-│   └── speed_processing.py          ← STEP 3: Run continuously
+│   ├── speed_processing.py          # PySpark file consumer (simulation mode)
+│   └── spark_kafka_consumer.py      # Spark Structured Streaming (kafka mode)
+│
+├── streaming/                       # NEW: Enterprise streaming engine
+│   ├── __init__.py
+│   ├── kafka_config.py              # All Kafka settings from env vars
+│   ├── schema.py                    # Message schema + validator
+│   ├── producer.py                  # Kafka producer (retry + DLQ)
+│   ├── consumer.py                  # Kafka consumer (anomaly + MongoDB)
+│   ├── dlq_handler.py               # Dead Letter Queue (Kafka + file)
+│   └── monitoring.py                # Structured logging + metrics
+│
 ├── serving_layer/
-│   └── app.py                       ← STEP 4: Run continuously
+│   └── app.py                       # Flask REST API + LiveWorker thread
+│
+├── data/
+│   ├── stream_simulator.py          # Dual-mode simulator (simulation/kafka)
+│   ├── generate_historical.py       # One-time synthetic data generator
+│   ├── historical/city_day.csv      # Real Kaggle dataset (26 cities)
+│   ├── streaming_input/             # Simulation mode: JSON files land here
+│   ├── checkpoint/                  # Simulation mode: processed file list
+│   ├── checkpoint_kafka/            # Kafka mode: Spark checkpoint
+│   └── dlq/                         # Dead Letter Queue files (.jsonl)
+│
 ├── dashboard/
-│   └── index.html                   ← 9-tab dashboard
+│   └── index.html                   # 9-tab SPA (Chart.js, no build step)
+│
 ├── tests/
-│   └── test_ueris.py                ← pytest unit + integration tests
-├── docker-compose.yml               ← One-command deployment
-├── Dockerfile
-└── requirements.txt
+│   └── test_ueris.py                # pytest suite (unit + integration)
+│
+├── compute_atlas_collections.py     # One-time: push correlations/quality to Atlas
+├── docker-compose.yml               # Full stack: Kafka + MongoDB + App
+├── Dockerfile                       # Multi-stage: slim or with Spark
+├── requirements.txt                 # Production dependencies
+├── requirements-local.txt           # Local dev: PySpark + Kafka
+├── .env.example                     # Environment variable template
+└── README.md
 ```
 
 ---
 
-## Setup (Manual)
+## Quick Start
 
-### 1. Install dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### 2. Download Kaggle dataset
-
-https://www.kaggle.com/datasets/rohanrao/air-quality-data-in-india
-
-Place at: `data/historical/city_day.csv`
-
-### 3. (Optional) WAQI token
+### Option A — Simulation Mode (no Kafka, easiest)
 
 ```bash
-set WAQI_TOKEN=your_token     # Windows
-export WAQI_TOKEN=your_token  # Linux/Mac
-```
+# 1. Install dependencies
+pip install -r requirements.txt -r requirements-local.txt
 
-Free token at https://aqicn.org/api/
+# 2. Copy env file
+cp .env.example .env
+# Edit .env: set MONGO_URI and WAQI_TOKEN
 
----
-
-## Running (4 terminals)
-
-```bash
-# Terminal 1 — once, wait for completion (~2-3 min)
+# 3. Run batch layer once
 python batch_layer/batch_processing.py
 
-# Terminal 2 — keep running
+# 4. Start simulator (Terminal 1)
 python data/stream_simulator.py
 
-# Terminal 3 — keep running
+# 5. Start speed layer (Terminal 2)
 python speed_layer/speed_processing.py
 
-# Terminal 4 — keep running, then open browser
+# 6. Start serving layer (Terminal 3)
 python serving_layer/app.py
-# → http://localhost:5000
+
+# 7. Open browser
+open http://localhost:5000
+```
+
+### Option B — Kafka Mode (full enterprise stack)
+
+```bash
+# 1. Copy env file and set STREAMING_MODE
+cp .env.example .env
+# Set: STREAMING_MODE=kafka, MONGO_URI, WAQI_TOKEN
+
+# 2. Start full stack with Docker Compose
+docker-compose up --build
+
+# 3. Monitor Kafka at http://localhost:8080
+# 4. View dashboard at http://localhost:5000
+# 5. Check API health at http://localhost:5000/api/health
+```
+
+### Option C — Simulation mode via Docker Compose
+
+```bash
+docker-compose --profile simulation up --build
 ```
 
 ---
 
-## Docker (one command)
+## Streaming Mode Selection
 
-```bash
-# Place city_day.csv in data/historical/ first
-docker-compose up
-# → http://localhost:5000
-```
+| Environment Variable | Value | Effect |
+|---------------------|-------|--------|
+| `STREAMING_MODE` | `simulation` (default) | File-based, no Kafka needed |
+| `STREAMING_MODE` | `kafka` | Enterprise Kafka pipeline |
+| `KAFKA_MODE` | `1` | Legacy alias for `STREAMING_MODE=kafka` |
 
 ---
 
 ## API Reference
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/health` | Layer status + document counts |
-| GET | `/api/cities` | All 26 cities — Lambda merged view |
-| GET | `/api/city/<n>` | Single city: batch + realtime + forecast + corr |
-| GET | `/api/realtime` | Raw speed-layer readings |
-| GET | `/api/ranking` | Health leaderboard sorted by score |
-| GET | `/api/forecast/<n>` | 12-month USI forecast with bands |
-| GET | `/api/correlation/<n>` | Pearson correlation matrix |
-| GET | `/api/quality` | Data quality report |
-| GET | `/api/export/csv` | Download all stats as CSV |
-| GET | `/api/architecture` | System metadata |
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/cities` | GET | All 26 cities, merged batch+realtime |
+| `/api/city/<name>` | GET | Full detail: stats, trends, realtime, forecast, correlation |
+| `/api/ranking` | GET | Cities ranked by historical avg USI |
+| `/api/forecast/<name>` | GET | 12-month USI forecast with confidence bands |
+| `/api/correlation/<name>` | GET | Pearson 4×4 matrix [AQI, Temp, Hum, USI] |
+| `/api/quality` | GET | Pipeline data quality: coverage, freshness, model status |
+| `/api/health` | GET | All pipeline components status |
+| `/api/realtime` | GET | Raw speed layer readings |
+| `/api/export/csv` | GET | Download all city data as CSV |
 
 ---
 
-## Environment Variables
+## Urban Stress Index (USI) Formula
 
-| Variable | Default | Description |
-|---|---|---|
-| `MONGO_URI` | `mongodb://localhost:27017/` | MongoDB connection |
-| `DB_NAME` | `urban_env_db` | Database name |
-| `WAQI_TOKEN` | `demo` | WAQI API token |
-| `HISTORICAL_CSV` | `data/historical/city_day.csv` | Kaggle dataset path |
-| `STREAM_OUTPUT_DIR` | `data/streaming_input/` | Speed layer input dir |
-| `FETCH_INTERVAL_SECONDS` | `60` | Stream simulator interval |
-| `POLL_INTERVAL_SECONDS` | `5` | Speed layer poll interval |
-| `FRESHNESS_WINDOW_MIN` | `30` | Realtime staleness cutoff |
-| `ALERT_WEBHOOK_URL` | `` | Slack/Teams webhook URL |
-| `KAFKA_MODE` | `0` | Set `1` to use Kafka instead of files |
-| `KAFKA_BROKER` | `localhost:9092` | Kafka broker address |
-| `KAFKA_TOPIC` | `ueris-stream` | Kafka topic name |
-| `API_KEY` | `` | Optional API key for /api/* auth |
-| `PORT` | `5000` | Flask port |
-| `PYSPARK_PYTHON` | Current Python | PySpark worker Python |
+```
+USI = (0.5 × AQI_norm) + (0.3 × Temp_norm) + (0.2 × Hum_deviation)
+
+Where:
+  AQI_norm      = min(AQI / 300, 1.0)
+  Temp_norm     = clamp((Temperature - 15) / 25, 0, 1)
+  Hum_deviation = |Humidity - 50| / 50
+
+Range: 0 (ideal) → 100 (severe stress)
+```
+
+| USI | Risk Level |
+|-----|-----------|
+| 0–20 | Low |
+| 20–40 | Moderate |
+| 40–60 | High |
+| 60–80 | Very High |
+| 80–100 | Severe |
 
 ---
 
-## Tests
+## Testing
 
 ```bash
-# Unit tests only (no server needed)
+# Unit tests only (no app/Kafka required)
 pytest tests/test_ueris.py -v -k "not integration"
 
-# All tests (requires app.py running)
+# All tests including API integration (requires app on port 5000)
 pytest tests/test_ueris.py -v
+
+# Specific test class
+pytest tests/test_ueris.py::TestSchema -v
+pytest tests/test_ueris.py::TestKafkaConfig -v
+pytest tests/test_ueris.py::TestDLQHandler -v
+
+# With coverage
+pytest tests/test_ueris.py -v --cov=streaming --cov-report=term-missing
 ```
 
 ---
 
-## Dashboard Tabs
+## Deployment (Render)
 
-| Tab | What it shows |
-|---|---|
-| 📊 Overview | Live city cards + detail panel with Lambda merge info |
-| 🏆 Ranking | Health leaderboard with score bars |
-| 🔮 Forecast | 12-month USI forecast charts per city |
-| ⚖️ Compare | Side-by-side bar/radar/stacked charts |
-| 📈 Trends | Historical AQI vs USI per city (2015–2020) |
-| 🔗 Correlation | Pearson heatmaps — AQI × Temp × Humidity × USI |
-| 🚨 Alerts | ML anomaly log with detection method |
-| ✅ Data Quality | Coverage, freshness, model status per city |
-| 🏗️ Architecture | System diagram, USI formula, live layer status |
+1. Push to GitHub
+2. Connect repo to Render (Web Service)
+3. Set environment variables in Render dashboard:
+   - `MONGO_URI` — MongoDB Atlas connection string
+   - `WAQI_TOKEN` — WAQI API token
+   - `PORT` — 5000
+4. Render auto-deploys on push
+5. LiveWorker background thread fetches live data every 60s
 
 ---
 
-## Cities Covered (26)
+## Tech Stack
 
-Ahmedabad · Aizawl · Amaravati · Amritsar · Bengaluru · Bhopal · Brajrajnagar ·
-Chandigarh · Chennai · Coimbatore · Delhi · Ernakulam · Gurugram · Guwahati ·
-Hyderabad · Jaipur · Jorapokhar · Kochi · Kolkata · Lucknow · Mumbai · Patna ·
-Shillong · Talcher · Thiruvananthapuram · Visakhapatnam
-
----
-
-## Notes
-
-- PySpark runs in `local[*]` mode. For a cluster: `.master("spark://host:7077")`
-- Kafka mode: install `confluent-kafka` and set `KAFKA_MODE=1`
-- Speed layer uses file-based micro-batching by default (Windows-compatible Kafka simulation)
-- Isolation Forest trained per city (not globally) so anomaly baselines are city-specific
+| Layer | Technology |
+|-------|-----------|
+| Batch Processing | Apache PySpark 3.5 (local mode) |
+| Stream Producer | Python + confluent-kafka |
+| Stream Broker | Apache Kafka 7.6 (Confluent image) |
+| Stream Consumer | Spark Structured Streaming |
+| Simulation Mode | PySpark file polling |
+| Anomaly Detection | scikit-learn Isolation Forest |
+| Database | MongoDB Atlas |
+| REST API | Flask 3.0 + Gunicorn |
+| Dashboard | HTML + Chart.js (no build step) |
+| Deployment | Render + Docker |
+| Monitoring | Structured JSON logging |
