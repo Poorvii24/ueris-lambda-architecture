@@ -18,7 +18,7 @@ import os
 from datetime import datetime
 from collections import defaultdict
 
-ATLAS_URI = "mongodb+srv://uerisadmin:StrongPassword123@cluster0.5motp8l.mongodb.net/?appName=Cluster0"
+ATLAS_URI = os.environ.get("MONGO_URI", "mongodb://localhost:27017/")
 DB_NAME   = "urban_env_db"
 CSV_PATH  = os.path.join(os.path.dirname(__file__), "data/historical/city_day.csv")
 
@@ -26,7 +26,8 @@ print("\n" + "="*60)
 print("  Computing missing collections for MongoDB Atlas")
 print("="*60)
 
-client = pymongo.MongoClient(ATLAS_URI)
+import certifi
+client = pymongo.MongoClient(ATLAS_URI, tlsCAFile=certifi.where() if "mongodb+srv" in ATLAS_URI else None, serverSelectionTimeoutMS=15000)
 db     = client[DB_NAME]
 
 # ── Load CSV ──────────────────────────────────────────────────

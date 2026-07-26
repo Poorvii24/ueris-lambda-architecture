@@ -1,19 +1,19 @@
-# =============================================================================
-# UERIS — Local Development Dependencies
-# =============================================================================
-# These are NOT installed on the production server (Render).
-# Required only for running the batch layer and speed layer locally.
-#
-# Install:
-#   pip install -r requirements.txt -r requirements-local.txt
-# =============================================================================
+# ── Core API ──────────────────────────────────────────────────────────────────
+flask>=3.0.0
+flask-cors>=4.0.0
+gunicorn>=21.2.0
 
-# ── PySpark (batch layer + speed layer, local only) ───────────────────────────
-pyspark>=3.4.0
+# ── Database ──────────────────────────────────────────────────────────────────
+pymongo>=4.6.0
+dnspython>=2.6.0
 
-# ── Kafka (enterprise streaming mode, local only) ─────────────────────────────
+# ── Live data fetching ────────────────────────────────────────────────────────
+requests>=2.31.0
+
+# ── ML / AI layer ─────────────────────────────────────────────────────────────
+scikit-learn>=1.4.0
+numpy>=1.26.0
+pandas>=2.0.0
+
+# ── Kafka (enterprise streaming mode) ─────────────────────────────────────────
 confluent-kafka>=2.3.0
-
-# ── Development tools ─────────────────────────────────────────────────────────
-pytest>=7.4.0
-pytest-mock>=3.12.0

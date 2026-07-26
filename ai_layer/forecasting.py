@@ -80,9 +80,9 @@ def _metrics(y_true, y_pred, n_samples):
 
 class ForecastingEngine:
     def __init__(self, db=None):
-        self._db       = db
-        self._registry = ModelRegistry(db) if db else None
-        self._fe       = FeatureEngineer()
+        self._db = db
+        self._registry = ModelRegistry(db) if db is not None else None
+        self._fe = FeatureEngineer()
 
     def train_city(self, city: str, df: pd.DataFrame) -> dict:
         print(f"  [Forecasting] Training city={city} rows={len(df)}")
