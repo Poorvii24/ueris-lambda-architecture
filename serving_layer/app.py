@@ -27,6 +27,7 @@ import os
 from datetime import datetime, timezone, timedelta
 
 import pymongo
+import certifi
 from flask import Flask, jsonify, send_from_directory, Response
 from flask_cors import CORS
 
@@ -53,7 +54,7 @@ CITY_ALIASES = {
 # ── DB Helper ──────────────────────────────────────────────────────────────────
 def get_db():
     """Return (db, client). Caller must close client."""
-    client = pymongo.MongoClient(MONGO_URI, serverSelectionTimeoutMS=8000)
+    client = pymongo.MongoClient(MONGO_URI, serverSelectionTimeoutMS=8000, tlsCAFile=certifi.where() if "mongodb+srv" in MONGO_URI else None, tlsAllowInvalidCertificates=True if "mongodb+srv" in MONGO_URI else False)
     return client[DB_NAME], client
 
 
@@ -695,7 +696,7 @@ _sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 def _get_ai_db():
     """Separate DB connection for AI endpoints."""
-    client = pymongo.MongoClient(MONGO_URI, serverSelectionTimeoutMS=8000)
+    client = pymongo.MongoClient(MONGO_URI, serverSelectionTimeoutMS=8000, tlsCAFile=certifi.where() if "mongodb+srv" in MONGO_URI else None, tlsAllowInvalidCertificates=True if "mongodb+srv" in MONGO_URI else False)
     return client[DB_NAME], client
 
 
