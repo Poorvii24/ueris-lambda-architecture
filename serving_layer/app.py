@@ -135,6 +135,9 @@ def enrich_city(batch: dict, rt: dict, rank: int) -> dict:
 
     return {
         "city":             batch["city"],
+        # ── Geo (for map view) ──
+        "lat":               CITIES_COORDS.get(batch["city"], {}).get("lat"),
+        "lon":               CITIES_COORDS.get(batch["city"], {}).get("lon"),
         # ── Live (speed layer) ──
         "current_usi":      current_usi,
         "current_aqi":      current_aqi,

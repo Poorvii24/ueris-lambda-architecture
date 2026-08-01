@@ -6,6 +6,17 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>UERIS — Urban Environmental Risk Intelligence</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script>
+    // Applied before first paint so there's no flash of the wrong theme.
+    (function () {
+      const saved = localStorage.getItem('ueris-theme');
+      if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+    })();
+  </script>
   <link
     href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500&display=swap"
     rel="stylesheet">
@@ -1115,46 +1126,629 @@
       background: var(--bad);
       box-shadow: 0 0 10px rgba(255, 82, 82, .5)
     }
+    /* ══════════════════════════ ENTERPRISE UI ADDITIONS ══════════════════════════ */
+
+    /* Light theme — same variable names, so every existing rule below repaints for free */
+    [data-theme="light"] {
+      --bg: #f3f5fa;
+      --s1: #ffffff;
+      --s2: #f8f9fc;
+      --s3: #eef1f7;
+      --s4: #e4e8f2;
+      --b1: rgba(15, 42, 96, .08);
+      --b2: rgba(15, 42, 96, .16);
+      --b3: rgba(15, 42, 96, .32);
+      --txt: #0f172a;
+      --txt2: #5b6478;
+      --txt3: #94a0b8;
+    }
+
+    [data-theme="light"] header,
+    [data-theme="light"] .topbar {
+      background: rgba(255, 255, 255, .86);
+    }
+
+    [data-theme="light"] .tabs,
+    [data-theme="light"] .sidebar {
+      background: #fff;
+    }
+
+    [data-theme="light"] #particles {
+      opacity: .35;
+    }
+
+    /* App shell: fixed sidebar + scrollable main column */
+    .app-shell {
+      display: flex;
+      min-height: 100vh;
+      position: relative;
+      z-index: 1;
+    }
+
+    .sidebar {
+      width: 232px;
+      flex-shrink: 0;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      background: rgba(3, 6, 14, .6);
+      border-right: 1px solid var(--b1);
+      backdrop-filter: blur(20px);
+      display: flex;
+      flex-direction: column;
+      padding: 20px 14px;
+      gap: 4px;
+    }
+
+    .sidebar .logo {
+      padding: 6px 8px 22px;
+    }
+
+    .side-sec {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.6px;
+      text-transform: uppercase;
+      color: var(--txt3);
+      padding: 16px 10px 6px;
+    }
+
+    .side-sec:first-of-type {
+      padding-top: 4px;
+    }
+
+    .side-nav .t {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      width: 100%;
+      text-align: left;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 500;
+      border-bottom: none;
+      color: var(--txt2);
+    }
+
+    .side-nav .t svg {
+      width: 17px;
+      height: 17px;
+      flex-shrink: 0;
+      opacity: .85;
+    }
+
+    .side-nav .t:hover {
+      background: var(--s2);
+      color: var(--txt);
+    }
+
+    .side-nav .t.on {
+      background: rgba(56, 139, 255, .12);
+      color: var(--a1);
+      border-bottom: none;
+    }
+
+    .side-nav .t.on svg {
+      opacity: 1;
+    }
+
+    .main-col {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      height: 64px;
+      background: rgba(3, 6, 14, .82);
+      backdrop-filter: blur(28px);
+      border-bottom: 1px solid var(--b1);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 0 26px;
+    }
+
+    .gsearch {
+      position: relative;
+      flex: 1;
+      max-width: 360px;
+    }
+
+    .gsearch svg {
+      position: absolute;
+      left: 13px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 15px;
+      height: 15px;
+      color: var(--txt3);
+      pointer-events: none;
+    }
+
+    .gsearch input {
+      width: 100%;
+      background: var(--s2);
+      border: 1px solid var(--b1);
+      border-radius: 10px;
+      padding: 8px 12px 8px 36px;
+      font-family: var(--f1);
+      font-size: 13px;
+      color: var(--txt);
+      outline: none;
+      transition: border-color .2s, background .2s;
+    }
+
+    .gsearch input:focus {
+      border-color: var(--b3);
+      background: var(--s3);
+    }
+
+    .gsearch input::placeholder {
+      color: var(--txt3);
+    }
+
+    /* Theme toggle switch */
+    .tswitch {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      border-radius: 20px;
+      background: var(--s3);
+      border: 1px solid var(--b1);
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background .25s;
+    }
+
+    .tswitch .knob {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #0f2a60, #388bff);
+      display: grid;
+      place-items: center;
+      font-size: 10px;
+      transition: transform .25s;
+    }
+
+    [data-theme="light"] .tswitch .knob {
+      transform: translateX(20px);
+      background: linear-gradient(135deg, #fbbf24, #fb923c);
+    }
+
+    /* Notification bell + dropdown */
+    .nbell {
+      position: relative;
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: var(--s2);
+      border: 1px solid var(--b1);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      color: var(--txt2);
+      flex-shrink: 0;
+    }
+
+    .nbell:hover {
+      color: var(--txt);
+      border-color: var(--b2);
+    }
+
+    .nbell svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .nbadge {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      min-width: 16px;
+      height: 16px;
+      padding: 0 3px;
+      border-radius: 8px;
+      background: var(--bad);
+      color: #fff;
+      font-size: 9px;
+      font-weight: 800;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--f2);
+    }
+
+    .nbadge.show {
+      display: flex;
+    }
+
+    .ndrop {
+      position: absolute;
+      top: 50px;
+      right: 0;
+      width: 340px;
+      max-height: 420px;
+      overflow-y: auto;
+      background: var(--s1);
+      border: 1px solid var(--b2);
+      border-radius: 14px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, .4);
+      display: none;
+      z-index: 300;
+      padding: 8px;
+    }
+
+    .ndrop.show {
+      display: block;
+      animation: ru .18s ease both;
+    }
+
+    .ndrop-h {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--txt2);
+      padding: 8px 10px;
+    }
+
+    .ndrop-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 10px;
+      border-radius: 9px;
+      cursor: pointer;
+    }
+
+    .ndrop-item:hover {
+      background: var(--s2);
+    }
+
+    .ndrop-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .ndrop-body {
+      min-width: 0;
+    }
+
+    .ndrop-t {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--txt);
+    }
+
+    .ndrop-s {
+      font-size: 11px;
+      color: var(--txt3);
+      font-family: var(--f2);
+    }
+
+    .ndrop-empty {
+      padding: 30px 10px;
+      text-align: center;
+      color: var(--txt3);
+      font-size: 12px;
+    }
+
+    /* Skeleton loading shimmer */
+    .skel {
+      background: linear-gradient(90deg, var(--s2) 25%, var(--s3) 50%, var(--s2) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 10px;
+    }
+
+    @keyframes shimmer {
+      0% {
+        background-position: 200% 0
+      }
+
+      100% {
+        background-position: -200% 0
+      }
+    }
+
+    .skel-card {
+      height: 210px;
+      border-radius: 18px;
+      border: 1px solid var(--b1);
+    }
+
+    /* Map */
+    .map-wrap {
+      height: 600px;
+      border-radius: 18px;
+      overflow: hidden;
+      border: 1px solid var(--b1);
+      position: relative;
+      z-index: 1;
+    }
+
+    .map-legend {
+      position: absolute;
+      bottom: 16px;
+      left: 16px;
+      z-index: 400;
+      background: rgba(7, 13, 28, .9);
+      border: 1px solid var(--b2);
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: 11px;
+      display: flex;
+      gap: 14px;
+      backdrop-filter: blur(10px);
+    }
+
+    .map-legend span {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--txt2);
+    }
+
+    .map-legend i {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .ueris-marker {
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, .85);
+      box-shadow: 0 0 14px currentColor;
+    }
+
+    .leaflet-popup-content-wrapper {
+      background: var(--s1);
+      color: var(--txt);
+      border-radius: 12px;
+      border: 1px solid var(--b2);
+    }
+
+    .leaflet-popup-tip {
+      background: var(--s1);
+    }
+
+    .mp-city {
+      font-weight: 700;
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+
+    .mp-risk {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 20px;
+      margin-bottom: 8px;
+    }
+
+    .mp-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11.5px;
+      color: var(--txt2);
+      padding: 2px 0;
+      font-family: var(--f2);
+    }
+
+    .mp-btn {
+      margin-top: 8px;
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--a1);
+      cursor: pointer;
+    }
+
+    /* Executive dashboard */
+    .exec-row {
+      display: grid;
+      grid-template-columns: 1.3fr 1fr;
+      gap: 18px;
+      margin-bottom: 22px;
+    }
+
+    .insight-box {
+      background: linear-gradient(135deg, rgba(56, 139, 255, .08), rgba(0, 229, 200, .05));
+      border: 1px solid var(--b2);
+      border-radius: 18px;
+      padding: 22px 24px;
+      font-size: 13.5px;
+      line-height: 1.65;
+      color: var(--txt);
+    }
+
+    .exec-mini-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--b1);
+      font-size: 12.5px;
+    }
+
+    .exec-mini-row:last-child {
+      border-bottom: none;
+    }
+
+    .filter-chips {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .fchip {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 11.5px;
+      font-weight: 600;
+      background: var(--s2);
+      border: 1px solid var(--b1);
+      color: var(--txt2);
+      cursor: pointer;
+      transition: all .15s;
+    }
+
+    .fchip:hover {
+      color: var(--txt);
+    }
+
+    .fchip.on {
+      background: rgba(56, 139, 255, .14);
+      border-color: var(--b3);
+      color: var(--a1);
+    }
+
+    @media (max-width: 980px) {
+      .sidebar {
+        display: none;
+      }
+
+      .exec-row {
+        grid-template-columns: 1fr;
+      }
+
+      .gsearch {
+        max-width: 160px;
+      }
+    }
   </style>
 </head>
 
 <body>
   <canvas id="particles"></canvas>
-  <header>
-    <div class="logo">
-      <div class="lm">🌆</div>
-      <div>
-        <div class="ln">UERIS</div>
-        <div class="lt">Urban Environmental Risk Intelligence System</div>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="logo">
+        <div class="lm">🌆</div>
+        <div>
+          <div class="ln">UERIS</div>
+          <div class="lt">Risk Intelligence</div>
+        </div>
       </div>
-    </div>
-    <div class="hr2">
-      <a class="hbtn" href="/api/export/csv" download>⬇ Export CSV</a>
-      <span id="clk" style="font-family:var(--f2);font-size:13px;color:var(--txt2)">—</span>
-      <div class="lpill" id="lpill">
-        <div class="ldot"></div><span id="ltxt">Connecting</span>
-      </div>
-    </div>
-  </header>
+      <nav class="side-nav" id="sideNav"><!-- rendered by JS: renderSidebar() --></nav>
+    </aside>
 
-  <div class="tabs">
-    <button class="t on" onclick="goTab('ov',this)">📊 Overview</button>
-    <button class="t" onclick="goTab('rnk',this)">🏆 Ranking</button>
-    <button class="t" onclick="goTab('fc',this)">🔮 Forecast</button>
-    <button class="t" onclick="goTab('cm',this)">⚖️ Compare</button>
-    <button class="t" onclick="goTab('ht',this)">📈 Trends</button>
-    <button class="t" onclick="goTab('corr',this)">🔗 Correlation</button>
-    <button class="t" onclick="goTab('al',this)">🚨 Alerts</button>
-    <button class="t" onclick="goTab('qlt',this)">✅ Data Quality</button>
-    <button class="t" onclick="goTab('ar',this)">🏗️ Architecture</button>
-  </div>
+    <div class="main-col">
+      <header class="topbar">
+        <div class="gsearch">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
+          <input id="gsearch" type="text" placeholder="Search cities…" oninput="applySearch(this.value)" />
+        </div>
+        <div class="hr2">
+          <a class="hbtn" href="/api/export/csv" download>⬇ Export CSV</a>
+          <span id="clk" style="font-family:var(--f2);font-size:13px;color:var(--txt2)">—</span>
+          <div class="tswitch" id="tswitch" onclick="toggleTheme()" title="Toggle theme"><div class="knob"></div></div>
+          <div style="position:relative">
+            <div class="nbell" id="nbell" onclick="toggleNotif()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" /></svg>
+              <div class="nbadge" id="nbadge">0</div>
+            </div>
+            <div class="ndrop" id="ndrop">
+              <div class="ndrop-h">Recent Alerts</div>
+              <div id="ndrop-list"><div class="ndrop-empty">No alerts yet — monitoring in progress</div></div>
+            </div>
+          </div>
+          <div class="lpill" id="lpill">
+            <div class="ldot"></div><span id="ltxt">Connecting</span>
+          </div>
+        </div>
+      </header>
 
-  <div class="w">
+      <div class="w">
     <div class="offl" id="offl">⚠ Cannot reach Flask API. Make sure <strong>serving_layer/app.py</strong> is running on
       port 5000.</div>
 
+    <!-- EXECUTIVE DASHBOARD -->
+    <div class="pn on" id="pn-exec">
+      <div class="kr" id="kx">
+        <div class="kc" style="--kc:var(--a1);--ki:'🏙️';animation-delay:.05s">
+          <div class="kl">Cities Monitored</div>
+          <div class="kv" id="kx1" style="color:var(--a1)">—</div>
+          <div class="kh">Live streams active</div>
+        </div>
+        <div class="kc" style="--kc:var(--ok);--ki:'💚';animation-delay:.1s">
+          <div class="kl">System Health</div>
+          <div class="kv" id="kx2" style="color:var(--ok)">—</div>
+          <div class="kh" id="kx2b">Batch + speed layer</div>
+        </div>
+        <div class="kc" style="--kc:var(--a4);--ki:'⚠️';animation-delay:.15s">
+          <div class="kl">Active Anomalies</div>
+          <div class="kv" id="kx3" style="color:var(--a4)">—</div>
+          <div class="kh">Isolation Forest detected</div>
+        </div>
+        <div class="kc" style="--kc:var(--warn);--ki:'📡';animation-delay:.2s">
+          <div class="kl">Streaming Freshness</div>
+          <div class="kv" id="kx4" style="color:var(--warn)">—</div>
+          <div class="kh" id="kx4b">Readings within 30 min</div>
+        </div>
+      </div>
+
+      <div class="sh">AI-generated system insight</div>
+      <div class="exec-row">
+        <div class="insight-box" id="exec-insight">
+          <div class="es" style="background:none;border:none;padding:6px"><div class="loader"></div>Loading AI insights…</div>
+        </div>
+        <div class="gc" style="margin:0">
+          <div class="gct">Highest-risk cities right now</div>
+          <div id="exec-toprisk"><div class="es" style="background:none;border:none"><div class="loader"></div></div></div>
+        </div>
+      </div>
+
+      <div class="sh">Risk level distribution — all monitored cities</div>
+      <div class="g2">
+        <div class="gc"><div class="gct">Cities by current risk level</div><canvas id="ch-exec1" style="max-height:220px"></canvas></div>
+        <div class="gc">
+          <div class="gct">Recent alert activity</div>
+          <div id="exec-alerts"><div class="es" style="background:none;border:none">No alerts yet — monitoring in progress</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INDIA MAP -->
+    <div class="pn" id="pn-map">
+      <div class="sh" style="margin-top:4px">Live city risk map — click a marker for details</div>
+      <div class="map-wrap">
+        <div id="leafletMap" style="height:100%"></div>
+        <div class="map-legend">
+          <span><i style="background:#22d47a"></i>Low</span>
+          <span><i style="background:#fbbf24"></i>Moderate</span>
+          <span><i style="background:#fb923c"></i>High</span>
+          <span><i style="background:#ff3d6b"></i>Very High</span>
+          <span><i style="background:#ef4444"></i>Severe</span>
+        </div>
+      </div>
+    </div>
+
     <!-- OVERVIEW -->
-    <div class="pn on" id="pn-ov">
+    <div class="pn" id="pn-ov">
+      <div class="filter-chips" id="riskChips">
+        <button class="fchip on" data-risk="all" onclick="setRiskFilter('all',this)">All Cities</button>
+        <button class="fchip" data-risk="Severe" onclick="setRiskFilter('Severe',this)">Severe</button>
+        <button class="fchip" data-risk="Very High" onclick="setRiskFilter('Very High',this)">Very High</button>
+        <button class="fchip" data-risk="High" onclick="setRiskFilter('High',this)">High</button>
+        <button class="fchip" data-risk="Moderate" onclick="setRiskFilter('Moderate',this)">Moderate</button>
+        <button class="fchip" data-risk="Low" onclick="setRiskFilter('Low',this)">Low</button>
+      </div>
       <div class="kr" id="kr">
         <div class="kc" style="--kc:var(--a1);--ki:'🏙️';animation-delay:.05s">
           <div class="kl">Cities Monitored</div>
@@ -1422,6 +2016,8 @@
       </div>
     </div>
   </div>
+  </div><!-- /.main-col -->
+  </div><!-- /.app-shell -->
   <script>
     /* PARTICLES */
     (() => {
@@ -1436,7 +2032,48 @@
 
     const API = "/api";
     const MO = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    let CHS = {}, CD = {}, SEL = null, ALERTS = [], FLAGS = { cmp: false, hist: false, fc: false, corr: false, rnk: false };
+    let CHS = {}, CD = {}, SEL = null, ALERTS = [], RISK_FILTER = 'all', LEAFMAP = null, MARKERS = {};
+    let FLAGS = { cmp: false, hist: false, fc: false, corr: false, rnk: false, map: false, exec: false };
+
+    /* ── Inline SVG icon set (single source, no external icon-font dependency) ── */
+    const ICONS = {
+      exec: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></svg>',
+      grid: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>',
+      map: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 20 3 17V4l6 3m0 13 6-3m-6 3V7m6 10 6 3V7l-6-3m0 13V4m0 3-6-3"/></svg>',
+      trophy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4Z"/><path d="M7 5H4a1 1 0 0 0-1 1c0 3 2 4 4 4M17 5h3a1 1 0 0 1 1 1c0 3-2 4-4 4"/></svg>',
+      forecast: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17h4l3-8 4 12 3-8h4"/></svg>',
+      scale: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18M3 7h18M5 7l-3 6a3 3 0 0 0 6 0L5 7Zm14 0-3 6a3 3 0 0 0 6 0l-3-6Z"/></svg>',
+      trend: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 17 6-6 4 4 8-8M15 7h6v6"/></svg>',
+      link: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 17H7a5 5 0 0 1 0-10h2M15 7h2a5 5 0 0 1 0 10h-2M8 12h8"/></svg>',
+      alert: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg>',
+      check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>',
+      stack: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 2 9 5-9 5-9-5 9-5Z"/><path d="m3 12 9 5 9-5M3 17l9 5 9-5"/></svg>',
+    };
+
+    const SIDE_NAV = [
+      { sec: 'Command Center' },
+      { id: 'exec', icon: 'exec', label: 'Executive' },
+      { id: 'ov', icon: 'grid', label: 'Overview' },
+      { id: 'map', icon: 'map', label: 'India Map' },
+      { sec: 'Analytics' },
+      { id: 'rnk', icon: 'trophy', label: 'Ranking' },
+      { id: 'fc', icon: 'forecast', label: 'Forecast' },
+      { id: 'cm', icon: 'scale', label: 'Compare' },
+      { id: 'ht', icon: 'trend', label: 'Trends' },
+      { id: 'corr', icon: 'link', label: 'Correlation' },
+      { sec: 'System' },
+      { id: 'al', icon: 'alert', label: 'Alerts' },
+      { id: 'qlt', icon: 'check', label: 'Data Quality' },
+      { id: 'ar', icon: 'stack', label: 'Architecture' },
+    ];
+
+    function renderSidebar() {
+      document.getElementById('sideNav').innerHTML = SIDE_NAV.map(item => item.sec
+        ? `<div class="side-sec">${item.sec}</div>`
+        : `<button class="t${item.id === 'exec' ? ' on' : ''}" data-nav="${item.id}" onclick="goTab('${item.id}',this)">${ICONS[item.icon]}<span>${item.label}</span></button>`
+      ).join('');
+    }
+    renderSidebar();
 
     function goTab(n, b) {
       document.querySelectorAll('.t').forEach(t => t.classList.remove('on')); b.classList.add('on');
@@ -1450,6 +2087,8 @@
       if (n === 'rnk' && !FLAGS.rnk) buildRanking();
       if (n === 'qlt') buildQuality();
       if (n === 'ar') loadArchStatus();
+      if (n === 'exec') loadExecutive();
+      if (n === 'map') loadMap();
     }
 
     const rc = r => ({ Low: '#22d47a', Moderate: '#fbbf24', High: '#fb923c', 'Very High': '#ff3d6b', Severe: '#ef4444' }[r] || '#7a90b8');
@@ -1481,6 +2120,8 @@
         buildAdv(d.cities);
         if (document.getElementById('pn-cm').classList.contains('on')) buildCmp();
         FLAGS.rnk = false; FLAGS.fc = false; FLAGS.corr = false;
+        if (LEAFMAP) updateMapMarkers();
+        if (document.getElementById('pn-exec').classList.contains('on')) loadExecutive();
       } catch (e) {
         document.getElementById('offl').style.display = 'block';
         document.getElementById('ltxt').textContent = 'Offline';
@@ -1721,7 +2362,7 @@
     }
 
     /* ALERTS */
-    function addAlert(c) { ALERTS.unshift({ city: c.city, aqi: c.current_aqi, usi: c.current_usi, risk: c.current_risk, method: c.anomaly_method || 'threshold', time: new Date().toLocaleTimeString('en-IN', { hour12: false }) }); renderAlerts() }
+    function addAlert(c) { ALERTS.unshift({ city: c.city, aqi: c.current_aqi, usi: c.current_usi, risk: c.current_risk, method: c.anomaly_method || 'threshold', time: new Date().toLocaleTimeString('en-IN', { hour12: false }) }); renderAlerts(); renderNotifDropdown() }
     function renderAlerts() {
       const w = document.getElementById('aw');
       if (!ALERTS.length) { w.innerHTML = '<div class="noal"><div style="font-size:40px;opacity:.2;margin-bottom:12px">🔔</div><div>No alerts yet — monitoring in progress</div></div>'; return }
@@ -1731,6 +2372,152 @@
       <div class="alb"><div class="alt">${a.city} — ML Anomaly Detected [${a.method}]</div><div class="ald">AQI ${a.aqi?.toFixed(0) || '—'} · USI ${a.usi?.toFixed(2) || '—'} · Risk: ${a.risk}</div></div>
       <div class="alts">${a.time}</div>
     </div>`).join('');
+      const execWrap = document.getElementById('exec-alerts');
+      if (execWrap) execWrap.innerHTML = ALERTS.slice(0, 6).map(a =>
+        `<div class="exec-mini-row"><span>${a.city}</span><span style="color:${rc(a.risk)}">${a.risk}</span></div>`
+      ).join('');
+    }
+
+    /* ── TOPBAR: theme toggle, notifications, search, risk filter ── */
+    function toggleTheme() {
+      const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+      if (isLight) { document.documentElement.removeAttribute('data-theme'); localStorage.setItem('ueris-theme', 'dark') }
+      else { document.documentElement.setAttribute('data-theme', 'light'); localStorage.setItem('ueris-theme', 'light') }
+    }
+
+    function toggleNotif() { document.getElementById('ndrop').classList.toggle('show') }
+    document.addEventListener('click', e => {
+      const bell = document.getElementById('nbell'), drop = document.getElementById('ndrop');
+      if (drop.classList.contains('show') && !bell.contains(e.target) && !drop.contains(e.target)) drop.classList.remove('show');
+    });
+
+    function renderNotifDropdown() {
+      const badge = document.getElementById('nbadge'), list = document.getElementById('ndrop-list');
+      if (!ALERTS.length) { badge.classList.remove('show'); list.innerHTML = '<div class="ndrop-empty">No alerts yet — monitoring in progress</div>'; return }
+      badge.classList.add('show'); badge.textContent = ALERTS.length > 99 ? '99+' : ALERTS.length;
+      list.innerHTML = ALERTS.slice(0, 10).map(a => `
+        <div class="ndrop-item" onclick="goToCity('${a.city}')">
+          <div class="ndrop-dot" style="background:${rc(a.risk)}"></div>
+          <div class="ndrop-body"><div class="ndrop-t">${a.city} — ${a.risk} risk</div><div class="ndrop-s">AQI ${a.aqi?.toFixed(0) || '—'} · ${a.time}</div></div>
+        </div>`).join('');
+    }
+
+    function goToCity(city) {
+      document.getElementById('ndrop').classList.remove('show');
+      document.querySelector('[data-nav="ov"]').click();
+      setTimeout(() => selCity(city), 50);
+    }
+
+    function applySearch(q) {
+      q = q.trim().toLowerCase();
+      document.querySelectorAll('#cg .cc').forEach(card => {
+        const name = card.querySelector('.cn')?.textContent.toLowerCase() || '';
+        card.style.display = name.includes(q) ? '' : 'none';
+      });
+      document.querySelectorAll('#rnk-wrap tr[data-city]').forEach(row => {
+        const name = (row.dataset.city || '').toLowerCase();
+        row.style.display = name.includes(q) ? '' : 'none';
+      });
+    }
+
+    function setRiskFilter(risk, btn) {
+      RISK_FILTER = risk;
+      document.querySelectorAll('#riskChips .fchip').forEach(c => c.classList.remove('on'));
+      btn.classList.add('on');
+      document.querySelectorAll('#cg .cc').forEach(card => {
+        const cardRisk = card.querySelector('.cb')?.textContent.trim();
+        card.style.display = (risk === 'all' || cardRisk === risk) ? '' : 'none';
+      });
+    }
+
+    /* ── EXECUTIVE DASHBOARD ── */
+    async function loadExecutive() {
+      const cities = Object.values(CD);
+      try {
+        const [health, insights] = await Promise.all([
+          fetch(`${API}/health`).then(r => r.json()),
+          fetch(`${API}/ai/insights`).then(r => r.json()),
+        ]);
+
+        document.getElementById('kx1').textContent = cities.length || health.speed_layer?.documents || '—';
+
+        const bl = health.batch_layer || {}, sl = health.speed_layer || {};
+        const healthy = (bl.ready ? 1 : 0) + (sl.ready ? 1 : 0) + (health.correlations?.ready ? 1 : 0) + (health.data_quality?.ready ? 1 : 0);
+        document.getElementById('kx2').textContent = `${Math.round(healthy / 4 * 100)}%`;
+        document.getElementById('kx2b').textContent = `${healthy}/4 pipeline layers ready`;
+
+        const anomalies = cities.filter(c => c.is_anomaly).length;
+        document.getElementById('kx3').textContent = anomalies;
+
+        document.getElementById('kx4').textContent = sl.fresh_readings != null ? `${sl.fresh_readings}/${sl.documents || cities.length}` : '—';
+        document.getElementById('kx4b').textContent = 'Readings within 30 min';
+
+        const insightBox = document.getElementById('exec-insight');
+        if (insights.data) {
+          const d = insights.data;
+          insightBox.innerHTML = `<div style="font-weight:700;margin-bottom:8px;color:var(--a1)">📌 ${d.headline || 'System Insight'}</div><div>${d.summary || d.narrative || JSON.stringify(d).slice(0, 400)}</div>`;
+        } else {
+          insightBox.innerHTML = `<div style="color:var(--txt2)">${insights.message || 'No AI insights available yet. Run batch_layer/ai_batch_processor.py to generate them.'}</div>`;
+        }
+
+        const top = [...cities].filter(c => c.current_usi != null).sort((a, b) => (b.current_usi || 0) - (a.current_usi || 0)).slice(0, 6);
+        document.getElementById('exec-toprisk').innerHTML = top.length ? top.map(c => `
+          <div class="exec-mini-row" style="cursor:pointer" onclick="goToCity('${c.city}')">
+            <span>${c.city}</span>
+            <span style="color:${rc(c.current_risk)};font-family:var(--f2)">${c.current_usi?.toFixed(1)} · ${c.current_risk}</span>
+          </div>`).join('') : '<div style="color:var(--txt2);font-size:12px">No live data yet</div>';
+
+        const riskCounts = {};
+        cities.forEach(c => { const r = c.current_risk || 'N/A'; riskCounts[r] = (riskCounts[r] || 0) + 1 });
+        mk('ch-exec1', 'doughnut', {
+          labels: Object.keys(riskCounts),
+          datasets: [{ data: Object.values(riskCounts), backgroundColor: Object.keys(riskCounts).map(rc), borderWidth: 0 }]
+        }, { plugins: { legend: { display: true, position: 'right', labels: { color: '#7a90b8', font: { size: 11 } } } }, scales: {} });
+
+        renderNotifDropdown();
+      } catch (e) {
+        document.getElementById('exec-insight').innerHTML = '<div style="color:var(--txt2)">Could not load AI insights — API unreachable.</div>';
+      }
+    }
+
+    /* ── INDIA MAP (Leaflet) ── */
+    function initMapIfNeeded() {
+      if (LEAFMAP) return;
+      LEAFMAP = L.map('leafletMap', { zoomControl: true }).setView([22.5, 80], 4.6);
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '© OpenStreetMap, © CARTO', maxZoom: 18,
+      }).addTo(LEAFMAP);
+    }
+
+    function updateMapMarkers() {
+      if (!LEAFMAP) return;
+      Object.values(CD).forEach(c => {
+        if (c.lat == null || c.lon == null) return;
+        const color = rc(c.current_risk);
+        const usi = c.current_usi ?? c.avg_usi ?? 0;
+        const radius = 7 + Math.min(usi, 100) / 6;
+        const popupHtml = `
+          <div class="mp-city">${c.city}</div>
+          <div class="mp-risk" style="background:${color}22;color:${color}">${c.current_risk || 'N/A'}</div>
+          <div class="mp-row"><span>USI</span><span>${usi?.toFixed(1) ?? '—'}</span></div>
+          <div class="mp-row"><span>AQI</span><span>${c.current_aqi?.toFixed(0) ?? '—'}</span></div>
+          <div class="mp-row"><span>Temp</span><span>${c.current_temp?.toFixed(1) ?? '—'}°C</span></div>
+          <div class="mp-btn" onclick="goToCity('${c.city}')">View full analytics →</div>`;
+        if (MARKERS[c.city]) {
+          MARKERS[c.city].setStyle({ color, fillColor: color, radius });
+          MARKERS[c.city].setPopupContent(popupHtml);
+        } else {
+          MARKERS[c.city] = L.circleMarker([c.lat, c.lon], {
+            radius, color, fillColor: color, fillOpacity: .75, weight: 2, className: 'ueris-marker'
+          }).addTo(LEAFMAP).bindPopup(popupHtml);
+        }
+      });
+    }
+
+    function loadMap() {
+      initMapIfNeeded();
+      updateMapMarkers();
+      setTimeout(() => LEAFMAP && LEAFMAP.invalidateSize(), 80);
     }
 
     /* DATA QUALITY */
