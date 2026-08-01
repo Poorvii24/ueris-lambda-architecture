@@ -38,9 +38,9 @@ from datetime import datetime, timezone
 
 import numpy as np
 import pandas as pd
-import pymongo
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from common import db as mongo_db
 
 os.environ["PYSPARK_PYTHON"]        = os.environ.get("PYSPARK_PYTHON", sys.executable)
 os.environ["PYSPARK_DRIVER_PYTHON"] = os.environ.get("PYSPARK_DRIVER_PYTHON", sys.executable)
@@ -128,7 +128,7 @@ def main():
     print("="*65 + "\n")
 
     # ── Connect to MongoDB ─────────────────────────────────────────────────────
-    client   = pymongo.MongoClient(MONGO_URI, serverSelectionTimeoutMS=10000)
+    client   = mongo_db.get_client()
     db       = client[DB_NAME]
     registry = ModelRegistry(db)
 

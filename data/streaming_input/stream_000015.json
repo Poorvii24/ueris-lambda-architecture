@@ -1,0 +1,1 @@
+{"schema_version": "1.0", "source": "simulator", "lat": 19.076, "lon": 72.8777, "usi": null, "risk_level": null, "is_anomaly": null, "data_source": "Open-Meteo+Open-Meteo-AQ", "fetch_duration_ms": 1203, "timestamp": "2026-07-16T15:23:30.189381+00:00", "city": "Mumbai", "aqi": 69.0, "temperature": 27.8, "humidity": 81.0}

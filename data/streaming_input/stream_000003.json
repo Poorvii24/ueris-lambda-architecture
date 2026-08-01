@@ -1,0 +1,1 @@
+{"schema_version": "1.0", "source": "simulator", "lat": 31.634, "lon": 74.8723, "usi": null, "risk_level": null, "is_anomaly": null, "data_source": "Open-Meteo+Open-Meteo-AQ", "fetch_duration_ms": 1234, "timestamp": "2026-07-16T15:21:20.242112+00:00", "city": "Amritsar", "aqi": 175.0, "temperature": 31.5, "humidity": 72.0}

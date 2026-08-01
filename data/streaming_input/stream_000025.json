@@ -1,0 +1,1 @@
+{"schema_version": "1.0", "source": "simulator", "lat": 23.2599, "lon": 77.4126, "usi": null, "risk_level": null, "is_anomaly": null, "data_source": "Open-Meteo+Open-Meteo-AQ", "fetch_duration_ms": 1109, "timestamp": "2026-07-16T15:25:57.182802+00:00", "city": "Bhopal", "aqi": 83.0, "temperature": 28.3, "humidity": 78.0}

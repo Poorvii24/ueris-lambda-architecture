@@ -1,0 +1,1 @@
+{"schema_version": "1.0", "source": "simulator", "lat": 11.0168, "lon": 76.9558, "usi": null, "risk_level": null, "is_anomaly": null, "data_source": "Open-Meteo+Open-Meteo-AQ", "fetch_duration_ms": 1140, "timestamp": "2026-07-16T15:26:10.242749+00:00", "city": "Coimbatore", "aqi": 59.0, "temperature": 24.7, "humidity": 84.0}

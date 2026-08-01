@@ -11,12 +11,15 @@ Run:
     py -3.11 compute_atlas_collections.py
 """
 
-import pymongo
 import csv
 import math
 import os
+import sys
 from datetime import datetime
 from collections import defaultdict
+
+sys.path.insert(0, os.path.dirname(__file__))
+from common.db import build_client
 
 ATLAS_URI = os.environ.get("MONGO_URI", "mongodb://localhost:27017/")
 DB_NAME   = "urban_env_db"
@@ -26,8 +29,7 @@ print("\n" + "="*60)
 print("  Computing missing collections for MongoDB Atlas")
 print("="*60)
 
-import certifi
-client = pymongo.MongoClient(ATLAS_URI, tlsCAFile=certifi.where() if "mongodb+srv" in ATLAS_URI else None, serverSelectionTimeoutMS=15000)
+client = build_client(ATLAS_URI, serverSelectionTimeoutMS=15000)
 db     = client[DB_NAME]
 
 # ── Load CSV ──────────────────────────────────────────────────

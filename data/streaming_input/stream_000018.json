@@ -1,0 +1,1 @@
+{"schema_version": "1.0", "source": "simulator", "lat": 20.95, "lon": 85.2333, "usi": null, "risk_level": null, "is_anomaly": null, "data_source": "Open-Meteo+Open-Meteo-AQ", "fetch_duration_ms": 1094, "timestamp": "2026-07-16T15:23:39.509975+00:00", "city": "Talcher", "aqi": 87.0, "temperature": 25.2, "humidity": 97.0}

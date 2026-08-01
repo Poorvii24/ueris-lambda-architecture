@@ -1,0 +1,1 @@
+{"schema_version": "1.0", "source": "simulator", "lat": 13.0827, "lon": 80.2707, "usi": null, "risk_level": null, "is_anomaly": null, "data_source": "Open-Meteo+Open-Meteo-AQ", "fetch_duration_ms": 1328, "timestamp": "2026-07-16T16:00:57.385536+00:00", "city": "Chennai", "aqi": 99.0, "temperature": 31.1, "humidity": 63.0}

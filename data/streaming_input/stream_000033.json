@@ -1,0 +1,1 @@
+{"schema_version": "1.0", "source": "simulator", "lat": 26.1445, "lon": 91.7362, "usi": null, "risk_level": null, "is_anomaly": null, "data_source": "Open-Meteo+Open-Meteo-AQ", "fetch_duration_ms": 1141, "timestamp": "2026-07-16T15:26:21.300079+00:00", "city": "Guwahati", "aqi": 58.0, "temperature": 27.3, "humidity": 95.0}

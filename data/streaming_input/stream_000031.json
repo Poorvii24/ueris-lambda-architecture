@@ -1,0 +1,1 @@
+{"schema_version": "1.0", "source": "simulator", "lat": 9.9816, "lon": 76.2999, "usi": null, "risk_level": null, "is_anomaly": null, "data_source": "Open-Meteo+Open-Meteo-AQ", "fetch_duration_ms": 1125, "timestamp": "2026-07-16T15:26:15.770260+00:00", "city": "Ernakulam", "aqi": 78.0, "temperature": 27.7, "humidity": 80.0}

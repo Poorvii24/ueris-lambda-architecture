@@ -1,0 +1,1 @@
+{"schema_version": "1.0", "source": "simulator", "lat": 12.9716, "lon": 77.5946, "usi": null, "risk_level": null, "is_anomaly": null, "data_source": "Open-Meteo+Open-Meteo-AQ", "fetch_duration_ms": 1125, "timestamp": "2026-07-16T15:21:23.007125+00:00", "city": "Bengaluru", "aqi": 65.0, "temperature": 24.7, "humidity": 64.0}

@@ -1,0 +1,1 @@
+{"schema_version": "1.0", "source": "simulator", "lat": 23.68, "lon": 86.42, "usi": null, "risk_level": null, "is_anomaly": null, "data_source": "Open-Meteo+Open-Meteo-AQ", "fetch_duration_ms": 1140, "timestamp": "2026-07-16T15:23:03.360523+00:00", "city": "Jorapokhar", "aqi": 99.0, "temperature": 28.5, "humidity": 84.0}

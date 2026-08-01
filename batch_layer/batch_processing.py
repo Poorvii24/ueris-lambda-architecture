@@ -28,13 +28,15 @@ Run:
 import os, sys, json, pickle, base64
 import numpy as np
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from common import db as mongo_db
+
 _py = os.environ.get("PYSPARK_PYTHON", sys.executable)
 os.environ["PYSPARK_PYTHON"]        = _py
 os.environ["PYSPARK_DRIVER_PYTHON"] = os.environ.get("PYSPARK_DRIVER_PYTHON", _py)
 
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
-import pymongo
 from datetime import datetime
 from sklearn.ensemble import IsolationForest
 
@@ -258,7 +260,7 @@ def health_score(avg_usi):
         return 50.0
     return round((1 - (avg_usi - usi_min) / (usi_max - usi_min)) * 100, 1)
 
-client = pymongo.MongoClient(MONGO_URI)
+client = mongo_db.get_client()
 db     = client[DB_NAME]
 col    = db[BATCH_COLLECTION]
 col.drop()

@@ -1,0 +1,1 @@
+{"schema_version": "1.0", "source": "simulator", "lat": 22.5726, "lon": 88.3639, "usi": null, "risk_level": null, "is_anomaly": null, "data_source": "Open-Meteo+Open-Meteo-AQ", "fetch_duration_ms": 1187, "timestamp": "2026-07-16T15:23:14.011297+00:00", "city": "Kolkata", "aqi": 62.0, "temperature": 28.0, "humidity": 84.0}

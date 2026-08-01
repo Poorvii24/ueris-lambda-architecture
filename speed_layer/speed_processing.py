@@ -44,9 +44,10 @@ from datetime import datetime, timezone
 import numpy as np
 import pymongo
 
-# ── Make streaming module importable ───────────────────────────────────────────
+# ── Make streaming/common modules importable ────────────────────────────────────
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+from common import db as mongo_db
 from streaming.monitoring import logger, metrics
 from streaming.dlq_handler import DLQHandler
 
@@ -262,7 +263,7 @@ def process_loop():
     7. Route bad files to DLQ
     """
     # MongoDB connection
-    mongo_client   = pymongo.MongoClient(MONGO_URI, serverSelectionTimeoutMS=8000)
+    mongo_client   = mongo_db.get_client()
     db             = mongo_client[DB_NAME]
     col            = db[SPEED_COLLECTION]
 

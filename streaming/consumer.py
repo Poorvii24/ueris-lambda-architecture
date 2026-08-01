@@ -34,8 +34,13 @@ import threading
 from datetime import datetime, timezone
 from typing import Optional
 
+import sys
+
 import numpy as np
 import pymongo
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from common import db as mongo_db
 
 from streaming.kafka_config import (
     get_consumer_config,
@@ -122,7 +127,7 @@ class UERISConsumer:
         self._stopped  = threading.Event()
 
         # MongoDB
-        self._mongo_client = pymongo.MongoClient(MONGO_URI, serverSelectionTimeoutMS=8000)
+        self._mongo_client = mongo_db.get_client()
         self._db           = self._mongo_client[DB_NAME]
         self._col          = self._db[SPEED_COLLECTION]
 

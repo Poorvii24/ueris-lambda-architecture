@@ -1,0 +1,1 @@
+{"schema_version": "1.0", "source": "simulator", "lat": 17.385, "lon": 78.4867, "usi": null, "risk_level": null, "is_anomaly": null, "data_source": "Open-Meteo+Open-Meteo-AQ", "fetch_duration_ms": 1094, "timestamp": "2026-07-16T16:01:17.202918+00:00", "city": "Hyderabad", "aqi": 63.0, "temperature": 28.5, "humidity": 58.0}

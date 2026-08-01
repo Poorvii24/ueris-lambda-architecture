@@ -1,0 +1,1 @@
+{"schema_version": "1.0", "source": "simulator", "lat": 26.9124, "lon": 75.7873, "usi": null, "risk_level": null, "is_anomaly": null, "data_source": "Open-Meteo+Open-Meteo-AQ", "fetch_duration_ms": 1094, "timestamp": "2026-07-16T15:22:58.752622+00:00", "city": "Jaipur", "aqi": 195.0, "temperature": 32.9, "humidity": 47.0}

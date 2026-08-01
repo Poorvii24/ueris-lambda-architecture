@@ -49,7 +49,6 @@ os.environ["PYSPARK_PYTHON"]        = _py
 os.environ["PYSPARK_DRIVER_PYTHON"] = os.environ.get("PYSPARK_DRIVER_PYTHON", _py)
 
 import numpy as np
-import pymongo
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 from pyspark.sql.types import (
@@ -57,6 +56,7 @@ from pyspark.sql.types import (
     StringType, DoubleType, BooleanType, LongType
 )
 
+from common import db as mongo_db
 from streaming.kafka_config import (
     get_spark_kafka_options,
     KAFKA_BROKER,
@@ -105,7 +105,7 @@ def load_anomaly_models(mongo_uri: str, db_name: str) -> dict:
     """
     models = {}
     try:
-        client = pymongo.MongoClient(mongo_uri, serverSelectionTimeoutMS=8000)
+        client = mongo_db.get_client()
         db     = client[db_name]
         docs   = db["batch_views"].find({}, {"city": 1, "anomaly_model": 1, "_id": 0})
         for doc in docs:
@@ -117,7 +117,6 @@ def load_anomaly_models(mongo_uri: str, db_name: str) -> dict:
                     models[city] = pickle.loads(base64.b64decode(b64))
                 except Exception as e:
                     logger.warning("spark.model.load.failed", city=city, error=str(e))
-        client.close()
         logger.info("spark.models.loaded", count=len(models))
     except Exception as e:
         logger.error("spark.models.load.error", error=str(e))
@@ -143,8 +142,7 @@ def process_batch(batch_df, batch_id: int, anomaly_models: dict, dlq: DLQHandler
     processed  = 0
     anomalies  = 0
 
-    mongo_client = pymongo.MongoClient(MONGO_URI, serverSelectionTimeoutMS=8000)
-    col          = mongo_client[DB_NAME][SPEED_COLLECTION]
+    col = mongo_db.get_db(DB_NAME)[SPEED_COLLECTION]
 
     try:
         for row in rows:
@@ -215,8 +213,8 @@ def process_batch(batch_df, batch_id: int, anomaly_models: dict, dlq: DLQHandler
             metrics.record_message_received(city)
             processed += 1
 
-    finally:
-        mongo_client.close()
+    except Exception:
+        raise
 
     elapsed_ms = round((time.monotonic() - t_start) * 1000)
     logger.info(

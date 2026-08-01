@@ -1,0 +1,1 @@
+{"schema_version": "1.0", "source": "simulator", "lat": 16.573, "lon": 80.3582, "usi": null, "risk_level": null, "is_anomaly": null, "data_source": "Open-Meteo+Open-Meteo-AQ", "fetch_duration_ms": 1140, "timestamp": "2026-07-16T15:25:22.215078+00:00", "city": "Amaravati", "aqi": 70.0, "temperature": 30.6, "humidity": 62.0}

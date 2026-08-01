@@ -1,8 +1,15 @@
-import pymongo
-import certifi
+import os
+import sys
 
-URI = "mongodb+srv://poorvi1si23ad037_db_user:CvgWGwtnby2Uvtxj@cluster0.xvwmptt.mongodb.net/?appName=Cluster0"
-client = pymongo.MongoClient(URI, tlsCAFile=certifi.where(), serverSelectionTimeoutMS=15000)
+sys.path.insert(0, os.path.dirname(__file__))
+from common.db import build_client
+
+# SECURITY: URI must come from the environment -- never hardcode credentials.
+URI = os.environ.get("MONGO_URI") or os.environ.get("ATLAS_URI")
+if not URI:
+    raise SystemExit("Set MONGO_URI (or ATLAS_URI) before running this script.")
+
+client = build_client(URI, serverSelectionTimeoutMS=15000)
 
 # Drop entire database to completely free all storage
 client.drop_database("urban_env_db")

@@ -1,0 +1,1 @@
+{"schema_version": "1.0", "source": "simulator", "lat": 23.0225, "lon": 72.5714, "usi": null, "risk_level": null, "is_anomaly": null, "data_source": "Open-Meteo+Open-Meteo-AQ", "fetch_duration_ms": 1141, "timestamp": "2026-07-16T15:24:54.362924+00:00", "city": "Ahmedabad", "aqi": 82.0, "temperature": 29.5, "humidity": 75.0}

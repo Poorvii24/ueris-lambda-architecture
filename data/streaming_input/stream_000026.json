@@ -1,0 +1,1 @@
+{"schema_version": "1.0", "source": "simulator", "lat": 21.8167, "lon": 83.9167, "usi": null, "risk_level": null, "is_anomaly": null, "data_source": "Open-Meteo+Open-Meteo-AQ", "fetch_duration_ms": 1188, "timestamp": "2026-07-16T15:25:59.999892+00:00", "city": "Brajrajnagar", "aqi": 106.0, "temperature": 25.5, "humidity": 99.0}

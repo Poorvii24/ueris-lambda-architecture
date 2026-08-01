@@ -15,13 +15,26 @@ Run AFTER all batch scripts have finished locally:
   py -3.11 migrate_to_atlas.py
 """
 
-import pymongo
-import certifi
+import os
+import sys
 from datetime import datetime, timezone
 
-LOCAL_URI = "mongodb://localhost:27017/"
-ATLAS_URI = "mongodb+srv://poorvi1si23ad037_db_user:CvgWGwtnby2Uvtxj@cluster0.xvwmptt.mongodb.net/?appName=Cluster0"
-DB_NAME   = "urban_env_db"
+sys.path.insert(0, os.path.dirname(__file__))
+from common.db import build_client
+
+# SECURITY: never hardcode Atlas credentials in source. Both URIs come from
+# the environment. Set ATLAS_URI (and optionally LOCAL_URI) before running:
+#   set ATLAS_URI=mongodb+srv://user:pass@cluster0.xxxxx.mongodb.net/?appName=Cluster0
+#   py -3.11 migrate_to_atlas.py
+LOCAL_URI = os.environ.get("LOCAL_URI", "mongodb://localhost:27017/")
+ATLAS_URI = os.environ.get("ATLAS_URI")
+DB_NAME   = os.environ.get("DB_NAME", "urban_env_db")
+
+if not ATLAS_URI:
+    raise SystemExit(
+        "ATLAS_URI environment variable is not set. Refusing to run with a "
+        "hardcoded credential. Set ATLAS_URI and re-run."
+    )
 
 # Fields to exclude from each collection to save space
 EXCLUDE_FIELDS = {
@@ -37,11 +50,11 @@ EXCLUDE_FIELDS = {
 }
 
 print("Connecting to local MongoDB...")
-local_client = pymongo.MongoClient(LOCAL_URI, serverSelectionTimeoutMS=5000)
+local_client = build_client(LOCAL_URI, serverSelectionTimeoutMS=5000)
 local_db     = local_client[DB_NAME]
 
 print("Connecting to Atlas...")
-atlas_client = pymongo.MongoClient(ATLAS_URI, tlsCAFile=certifi.where(), serverSelectionTimeoutMS=15000)
+atlas_client = build_client(ATLAS_URI, serverSelectionTimeoutMS=15000)
 atlas_db     = atlas_client[DB_NAME]
 
 COLLECTIONS = ["batch_views", "correlations", "data_quality", "trend_profiles", "system_insights"]

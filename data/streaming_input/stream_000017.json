@@ -1,0 +1,1 @@
+{"schema_version": "1.0", "source": "simulator", "lat": 25.5788, "lon": 91.8933, "usi": null, "risk_level": null, "is_anomaly": null, "data_source": "Open-Meteo+Open-Meteo-AQ", "fetch_duration_ms": 1140, "timestamp": "2026-07-16T15:23:35.719388+00:00", "city": "Shillong", "aqi": 40.0, "temperature": 21.3, "humidity": 86.0}

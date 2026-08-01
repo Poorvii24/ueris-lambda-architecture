@@ -1,0 +1,1 @@
+{"schema_version": "1.0", "source": "simulator", "lat": 8.5241, "lon": 76.9366, "usi": null, "risk_level": null, "is_anomaly": null, "data_source": "Open-Meteo+Open-Meteo-AQ", "fetch_duration_ms": 1140, "timestamp": "2026-07-16T15:27:57.967988+00:00", "city": "Thiruvananthapuram", "aqi": 67.0, "temperature": 26.0, "humidity": 88.0}

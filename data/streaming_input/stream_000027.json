@@ -1,0 +1,1 @@
+{"schema_version": "1.0", "source": "simulator", "lat": 30.7333, "lon": 76.7794, "usi": null, "risk_level": null, "is_anomaly": null, "data_source": "Open-Meteo+Open-Meteo-AQ", "fetch_duration_ms": 1140, "timestamp": "2026-07-16T15:26:02.765793+00:00", "city": "Chandigarh", "aqi": 175.0, "temperature": 29.8, "humidity": 77.0}

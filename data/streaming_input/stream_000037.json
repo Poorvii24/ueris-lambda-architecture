@@ -1,0 +1,1 @@
+{"schema_version": "1.0", "source": "simulator", "lat": 26.8467, "lon": 80.9462, "usi": null, "risk_level": null, "is_anomaly": null, "data_source": "Open-Meteo+Open-Meteo-AQ", "fetch_duration_ms": 1062, "timestamp": "2026-07-16T15:27:08.518865+00:00", "city": "Lucknow", "aqi": 162.0, "temperature": 29.4, "humidity": 92.0}

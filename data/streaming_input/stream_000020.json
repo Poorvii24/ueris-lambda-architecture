@@ -1,0 +1,1 @@
+{"schema_version": "1.0", "source": "simulator", "lat": 17.6868, "lon": 83.2185, "usi": null, "risk_level": null, "is_anomaly": null, "data_source": "Open-Meteo+Open-Meteo-AQ", "fetch_duration_ms": 1141, "timestamp": "2026-07-16T15:23:45.036896+00:00", "city": "Visakhapatnam", "aqi": 91.0, "temperature": 30.0, "humidity": 68.0}

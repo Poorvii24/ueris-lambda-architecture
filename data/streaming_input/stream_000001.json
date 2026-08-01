@@ -1,0 +1,1 @@
+{"schema_version": "1.0", "source": "simulator", "lat": 23.7271, "lon": 92.7176, "usi": null, "risk_level": null, "is_anomaly": null, "data_source": "Open-Meteo+Open-Meteo-AQ", "fetch_duration_ms": 1141, "timestamp": "2026-07-16T15:21:14.404472+00:00", "city": "Aizawl", "aqi": 55.0, "temperature": 20.9, "humidity": 90.0}

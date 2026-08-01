@@ -1,0 +1,1 @@
+{"schema_version": "1.0", "source": "simulator", "lat": 28.6139, "lon": 77.209, "usi": null, "risk_level": null, "is_anomaly": null, "data_source": "Open-Meteo+Open-Meteo-AQ", "fetch_duration_ms": 1125, "timestamp": "2026-07-16T15:26:13.008273+00:00", "city": "Delhi", "aqi": 328.0, "temperature": 33.3, "humidity": 61.0}

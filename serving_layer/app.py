@@ -26,10 +26,13 @@ import math
 import os
 from datetime import datetime, timezone, timedelta
 
-import pymongo
-import certifi
+import sys as _sys_bootstrap
+_sys_bootstrap.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
 from flask import Flask, jsonify, send_from_directory, Response
 from flask_cors import CORS
+
+from common import db as mongo_db
 
 # ── App Setup ──────────────────────────────────────────────────────────────────
 app = Flask(
@@ -52,10 +55,21 @@ CITY_ALIASES = {
 
 
 # ── DB Helper ──────────────────────────────────────────────────────────────────
+class _PooledClientHandle:
+    """
+    Drop-in stand-in for the raw MongoClient that every route below still
+    calls `.close()` on. Routes don't need to change: `.close()` here is a
+    deliberate no-op, because the *real* client is a single process-wide
+    pooled connection (see common/db.py) that must stay open for the life
+    of the process, not be torn down after every request.
+    """
+    def close(self):
+        pass
+
+
 def get_db():
-    """Return (db, client). Caller must close client."""
-    client = pymongo.MongoClient(MONGO_URI, serverSelectionTimeoutMS=8000, tlsCAFile=certifi.where() if "mongodb+srv" in MONGO_URI else None, tlsAllowInvalidCertificates=True if "mongodb+srv" in MONGO_URI else False)
-    return client[DB_NAME], client
+    """Return (db, client) backed by the shared, pooled MongoClient."""
+    return mongo_db.get_db(DB_NAME), _PooledClientHandle()
 
 
 # ── Pure Functions (business logic, testable) ──────────────────────────────────
@@ -534,6 +548,11 @@ if __name__ == "__main__":
     print(f"  Dashboard : http://localhost:{port}")
     print(f"  API health: http://localhost:{port}/api/health")
     print(f"  MongoDB   : {MONGO_URI[:40]}...")
+    if mongo_db.ping():
+        print(f"  Mongo ping: OK")
+    else:
+        print(f"  Mongo ping: FAILED -- app will start, but every DB-backed "
+              f"route will fail until MONGO_URI/network is fixed.")
     print(f"{'='*60}\n")
     app.run(debug=False, host="0.0.0.0", port=port)
 
@@ -691,13 +710,10 @@ _init_worker()
 # Added by Phase 2 — Enterprise AI & Advanced Analytics
 # ═══════════════════════════════════════════════════════════════════════════════
 
-import sys as _sys
-_sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
-def _get_ai_db():
-    """Separate DB connection for AI endpoints."""
-    client = pymongo.MongoClient(MONGO_URI, serverSelectionTimeoutMS=8000, tlsCAFile=certifi.where() if "mongodb+srv" in MONGO_URI else None, tlsAllowInvalidCertificates=True if "mongodb+srv" in MONGO_URI else False)
-    return client[DB_NAME], client
+# _get_ai_db used to open its own second, independently-configured
+# MongoClient (a second, redundant TLS handshake per AI-endpoint request).
+# It now just aliases the one shared, pooled client from common/db.py.
+_get_ai_db = get_db
 
 
 # ── /api/ai/insights ───────────────────────────────────────────────────────────
