@@ -47,6 +47,42 @@
       --bad: #ff5252;
       --f1: 'Outfit', sans-serif;
       --f2: 'JetBrains Mono', monospace;
+
+      /* ── DESIGN SYSTEM: spacing scale (4px base unit) ── */
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-5: 20px;
+      --space-6: 24px;
+      --space-8: 32px;
+      --space-10: 40px;
+
+      /* ── DESIGN SYSTEM: radius scale ── */
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 18px;
+      --radius-full: 999px;
+
+      /* ── DESIGN SYSTEM: elevation / shadow scale ── */
+      --shadow-sm: 0 2px 10px rgba(0, 0, 0, .18);
+      --shadow-md: 0 12px 32px rgba(0, 0, 0, .32);
+      --shadow-lg: 0 26px 64px rgba(0, 0, 0, .48);
+
+      /* ── DESIGN SYSTEM: motion ── */
+      --ease: cubic-bezier(.4, 0, .2, 1);
+      --dur-fast: .15s;
+      --dur-base: .25s;
+      --dur-slow: .45s;
+
+      /* ── DESIGN SYSTEM: type scale ── */
+      --fs-xs: 10.5px;
+      --fs-sm: 12px;
+      --fs-base: 13px;
+      --fs-md: 14.5px;
+      --fs-lg: 17px;
+      --fs-xl: 22px;
+      --fs-2xl: 30px;
     }
 
     * {
@@ -179,11 +215,11 @@
     .hbtn {
       display: flex;
       align-items: center;
-      gap: 6px;
-      padding: 6px 14px;
+      gap: var(--space-2);
+      padding: var(--space-2) var(--space-4);
       background: rgba(56, 139, 255, .1);
       border: 1px solid rgba(56, 139, 255, .25);
-      border-radius: 20px;
+      border-radius: var(--radius-full);
       font-size: 12px;
       font-weight: 600;
       color: var(--a1);
@@ -276,8 +312,9 @@
     .kc {
       background: var(--s1);
       border: 1px solid var(--b1);
-      border-radius: 18px;
-      padding: 22px 24px;
+      border-radius: var(--radius-lg);
+      padding: var(--space-5) var(--space-6);
+      box-shadow: var(--shadow-sm);
       position: relative;
       overflow: hidden;
       transition: border-color .3s, transform .3s;
@@ -389,12 +426,12 @@
     }
 
     .cb {
-      font-size: 9px;
+      font-size: var(--fs-xs);
       font-weight: 700;
       letter-spacing: .9px;
       text-transform: uppercase;
-      padding: 3px 9px;
-      border-radius: 20px
+      padding: var(--space-1) var(--space-2);
+      border-radius: var(--radius-full)
     }
 
     .cu {
@@ -653,8 +690,9 @@
     .gc {
       background: var(--s1);
       border: 1px solid var(--b1);
-      border-radius: 18px;
-      padding: 24px;
+      border-radius: var(--radius-lg);
+      padding: var(--space-6);
+      box-shadow: var(--shadow-sm);
       animation: ru .4s ease both
     }
 
@@ -1601,8 +1639,8 @@
     }
 
     .fchip {
-      padding: 6px 14px;
-      border-radius: 20px;
+      padding: var(--space-2) var(--space-4);
+      border-radius: var(--radius-full);
       font-size: 11.5px;
       font-weight: 600;
       background: var(--s2);
@@ -1624,7 +1662,33 @@
 
     @media (max-width: 980px) {
       .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        z-index: 900;
+        transform: translateX(-100%);
+        transition: transform var(--dur-base) var(--ease);
+        box-shadow: var(--shadow-lg);
+      }
+
+      .sidebar.mobile-open {
+        transform: translateX(0);
+      }
+
+      .sidebar-backdrop {
         display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, .5);
+        z-index: 890;
+      }
+
+      .sidebar-backdrop.show {
+        display: block;
+      }
+
+      .hamburger {
+        display: grid !important;
       }
 
       .exec-row {
@@ -1632,8 +1696,63 @@
       }
 
       .gsearch {
-        max-width: 160px;
+        max-width: 140px;
       }
+
+      .kr {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .g2 {
+        grid-template-columns: 1fr;
+      }
+
+      .ai-panel,
+      .ndrop {
+        width: 94vw;
+        right: 3vw;
+      }
+
+      .modal-card-wide {
+        width: 92vw;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .kr {
+        grid-template-columns: 1fr;
+      }
+
+      .gsearch {
+        display: none;
+      }
+
+      .topbar {
+        padding: 0 14px;
+      }
+
+      .w {
+        padding: 16px 14px !important;
+      }
+    }
+
+    .hamburger {
+      display: none;
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-sm);
+      background: var(--s2);
+      border: 1px solid var(--b1);
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--txt2);
+      flex-shrink: 0;
+    }
+
+    .hamburger svg {
+      width: 18px;
+      height: 18px;
     }
     /* ══════════════════════════ PHASE 2 ADDITIONS ══════════════════════════ */
 
@@ -1768,8 +1887,8 @@
     }
 
     .toolbtn {
-      padding: 7px 13px;
-      border-radius: 9px;
+      padding: var(--space-2) var(--space-3);
+      border-radius: var(--radius-sm);
       background: var(--s2);
       border: 1px solid var(--b1);
       color: var(--txt2);
@@ -2114,9 +2233,9 @@
       max-width: 92vw;
       background: var(--s1);
       border: 1px solid var(--b2);
-      border-radius: 18px;
-      padding: 26px;
-      box-shadow: 0 30px 80px rgba(0, 0, 0, .5);
+      border-radius: var(--radius-lg);
+      padding: var(--space-6);
+      box-shadow: var(--shadow-lg);
     }
 
     .modal-card h3 {
@@ -2285,6 +2404,214 @@
     .state-block .sb-retry:hover {
       border-color: var(--b3);
     }
+    /* ══════════════════════════ PHASE 4: TOASTS, CONFIRM DIALOG, CHART FULLSCREEN ══════════════════════════ */
+
+    .toast-stack {
+      position: fixed;
+      bottom: 26px;
+      left: 26px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .toast {
+      min-width: 260px;
+      max-width: 340px;
+      background: var(--s1);
+      border: 1px solid var(--b2);
+      border-left: 3px solid var(--a1);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-md);
+      padding: var(--space-3) var(--space-4);
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      animation: toastIn var(--dur-base) var(--ease) both;
+    }
+
+    .toast.leaving {
+      animation: toastOut var(--dur-base) var(--ease) both;
+    }
+
+    .toast.success {
+      border-left-color: var(--ok);
+    }
+
+    .toast.error {
+      border-left-color: var(--bad);
+    }
+
+    .toast.warning {
+      border-left-color: var(--warn);
+    }
+
+    .toast .ti {
+      font-size: 16px;
+      line-height: 1;
+      margin-top: 1px;
+    }
+
+    .toast .tb {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .toast .tt {
+      font-size: var(--fs-sm);
+      font-weight: 700;
+      color: var(--txt);
+    }
+
+    .toast .ts {
+      font-size: var(--fs-xs);
+      color: var(--txt3);
+      margin-top: 2px;
+    }
+
+    .toast .tx {
+      cursor: pointer;
+      color: var(--txt3);
+      font-size: 14px;
+    }
+
+    @keyframes toastIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    @keyframes toastOut {
+      to {
+        opacity: 0;
+        transform: translateX(-16px)
+      }
+    }
+
+    /* Confirm dialog reuses .modal-bg/.modal-card */
+    .confirm-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-md);
+      background: rgba(255, 82, 82, .12);
+      color: var(--bad);
+      display: grid;
+      place-items: center;
+      margin-bottom: var(--space-4);
+      font-size: 20px;
+    }
+
+    .confirm-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: var(--space-5);
+    }
+
+    .confirm-actions button {
+      flex: 1;
+      padding: var(--space-3);
+      border-radius: var(--radius-sm);
+      font-size: var(--fs-sm);
+      font-weight: 700;
+      cursor: pointer;
+      border: 1px solid var(--b1);
+    }
+
+    .confirm-cancel {
+      background: var(--s2);
+      color: var(--txt2);
+    }
+
+    .confirm-ok {
+      background: var(--bad);
+      color: #fff;
+      border-color: var(--bad) !important;
+    }
+
+    /* Chart fullscreen */
+    .gct {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .chart-expand {
+      cursor: pointer;
+      color: var(--txt3);
+      width: 26px;
+      height: 26px;
+      border-radius: var(--radius-sm);
+      display: grid;
+      place-items: center;
+      transition: all var(--dur-fast);
+    }
+
+    .chart-expand:hover {
+      color: var(--a1);
+      background: var(--s2);
+    }
+
+    .chart-expand svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .chart-fullscreen-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 950;
+      background: rgba(2, 5, 12, .82);
+      backdrop-filter: blur(6px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .chart-fullscreen-modal.show {
+      display: flex;
+      animation: fadein var(--dur-base) ease both;
+    }
+
+    .cfm-card {
+      width: min(880px, 92vw);
+      height: min(560px, 80vh);
+      background: var(--s1);
+      border: 1px solid var(--b2);
+      border-radius: var(--radius-lg);
+      padding: var(--space-6);
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .cfm-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--space-4);
+    }
+
+    .cfm-head h3 {
+      font-size: var(--fs-lg);
+    }
+
+    .cfm-close {
+      cursor: pointer;
+      color: var(--txt2);
+      font-size: 20px;
+    }
+
+    .cfm-canvas-wrap {
+      flex: 1;
+      position: relative;
+    }
   </style>
 </head>
 
@@ -2306,9 +2633,13 @@
       </div>
       <nav class="side-nav" id="sideNav"><!-- rendered by JS: renderSidebar() --></nav>
     </aside>
+    <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar(false)"></div>
 
     <div class="main-col">
       <header class="topbar">
+        <div class="hamburger" id="hamburger" onclick="toggleSidebar()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18" /></svg>
+        </div>
         <div class="gsearch">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
           <input id="gsearch" type="text" placeholder="Search cities…" oninput="applySearch(this.value)" />
@@ -2390,7 +2721,7 @@
 
       <div class="sh">Risk level distribution — all monitored cities</div>
       <div class="g2">
-        <div class="gc"><div class="gct">Cities by current risk level</div><canvas id="ch-exec1" style="max-height:220px"></canvas></div>
+        <div class="gc"><div class="gct">Cities by current risk level<div class="chart-expand" onclick="openChartFullscreen('ch-exec1','Risk Level Distribution')" title="Expand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" /></svg></div></div><canvas id="ch-exec1" style="max-height:220px"></canvas></div>
         <div class="gc">
           <div class="gct">Recent alert activity</div>
           <div id="exec-alerts"><div class="es" style="background:none;border:none">No alerts yet — monitoring in progress</div></div>
@@ -2739,6 +3070,33 @@
     </div>
   </div>
 
+  <!-- TOASTS -->
+  <div class="toast-stack" id="toastStack"></div>
+
+  <!-- CONFIRM DIALOG -->
+  <div class="modal-bg" id="confirmModal">
+    <div class="modal-card">
+      <div class="confirm-icon">⚠️</div>
+      <h3 id="confirmTitle">Are you sure?</h3>
+      <div class="msub" id="confirmSub"></div>
+      <div class="confirm-actions">
+        <button class="confirm-cancel" onclick="closeConfirm()">Cancel</button>
+        <button class="confirm-ok" id="confirmOkBtn">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHART FULLSCREEN -->
+  <div class="chart-fullscreen-modal" id="chartFullscreenModal">
+    <div class="cfm-card">
+      <div class="cfm-head">
+        <h3 id="cfmTitle">Chart</h3>
+        <div class="cfm-close" onclick="closeChartFullscreen()">✕</div>
+      </div>
+      <div class="cfm-canvas-wrap"><canvas id="cfmCanvas"></canvas></div>
+    </div>
+  </div>
+
   <!-- DETAIL DRILL-DOWN MODAL -->
   <div class="modal-bg" id="detailModal">
     <div class="modal-card modal-card-wide">
@@ -2832,10 +3190,18 @@
     }
     renderSidebar();
 
+    function toggleSidebar(force) {
+      const sb = document.querySelector('.sidebar'), bd = document.getElementById('sidebarBackdrop');
+      const open = force !== undefined ? force : !sb.classList.contains('mobile-open');
+      sb.classList.toggle('mobile-open', open);
+      bd.classList.toggle('show', open);
+    }
+
     function goTab(n, b) {
       document.querySelectorAll('.t').forEach(t => t.classList.remove('on')); b.classList.add('on');
       document.querySelectorAll('.pn').forEach(p => p.classList.remove('on'));
       document.getElementById('pn-' + n).classList.add('on');
+      toggleSidebar(false);
       const cities = Object.values(CD);
       if (n === 'cm' && !FLAGS.cmp && cities.length) buildCmp();
       if (n === 'ht' && cities.length) { FLAGS.hist = false; buildHist(); }
@@ -3404,12 +3770,70 @@
       try { localStorage.setItem(ALERT_HISTORY_KEY, JSON.stringify(ALERTS.slice(0, 100))); } catch (e) { }
     }
 
-    function clearAlertHistory() {
-      ALERTS = [];
-      saveAlertHistory();
-      renderAlerts();
-      renderNotifDropdown();
+    /* ── TOAST NOTIFICATIONS ── */
+    function toast(title, sub, type = 'info', duration = 4000) {
+      const icons = { success: '✅', error: '⛔', warning: '⚠️', info: 'ℹ️' };
+      const stack = document.getElementById('toastStack');
+      const el = document.createElement('div');
+      el.className = `toast ${type}`;
+      el.innerHTML = `<div class="ti">${icons[type] || icons.info}</div>
+        <div class="tb"><div class="tt">${title}</div>${sub ? `<div class="ts">${sub}</div>` : ''}</div>
+        <div class="tx" onclick="dismissToast(this.parentElement)">✕</div>`;
+      stack.appendChild(el);
+      setTimeout(() => dismissToast(el), duration);
     }
+    function dismissToast(el) {
+      if (!el || !el.parentElement) return;
+      el.classList.add('leaving');
+      setTimeout(() => el.remove(), 250);
+    }
+
+    /* ── CONFIRM DIALOG (reusable) ── */
+    function confirmDialog(title, sub, onConfirm) {
+      document.getElementById('confirmTitle').textContent = title;
+      document.getElementById('confirmSub').textContent = sub || '';
+      const okBtn = document.getElementById('confirmOkBtn');
+      const fresh = okBtn.cloneNode(true); okBtn.replaceWith(fresh); // clear old listeners
+      fresh.addEventListener('click', () => { closeConfirm(); onConfirm(); });
+      document.getElementById('confirmModal').classList.add('show');
+    }
+    function closeConfirm() { document.getElementById('confirmModal').classList.remove('show') }
+    document.getElementById('confirmModal').addEventListener('click', e => {
+      if (e.target.id === 'confirmModal') closeConfirm();
+    });
+
+    function clearAlertHistory() {
+      if (!ALERTS.length) return toast('Nothing to clear', 'No alert history yet.', 'info');
+      confirmDialog('Clear alert history?', `This removes all ${ALERTS.length} stored alerts from this browser. This cannot be undone.`, () => {
+        ALERTS = [];
+        saveAlertHistory();
+        renderAlerts();
+        renderNotifDropdown();
+        toast('Alert history cleared', '', 'success');
+      });
+    }
+
+    /* ── CHART FULLSCREEN (generic — reusable on any Chart.js canvas) ── */
+    let CFM_CHART = null;
+    function openChartFullscreen(sourceCanvasId, title) {
+      const src = Chart.getChart(sourceCanvasId);
+      if (!src) return;
+      document.getElementById('cfmTitle').textContent = title || 'Chart';
+      document.getElementById('chartFullscreenModal').classList.add('show');
+      if (CFM_CHART) CFM_CHART.destroy();
+      CFM_CHART = new Chart(document.getElementById('cfmCanvas'), {
+        type: src.config.type,
+        data: JSON.parse(JSON.stringify(src.config.data)),
+        options: { ...src.config.options, maintainAspectRatio: false, responsive: true }
+      });
+    }
+    function closeChartFullscreen() {
+      document.getElementById('chartFullscreenModal').classList.remove('show');
+      if (CFM_CHART) { CFM_CHART.destroy(); CFM_CHART = null }
+    }
+    document.getElementById('chartFullscreenModal').addEventListener('click', e => {
+      if (e.target.id === 'chartFullscreenModal') closeChartFullscreen();
+    });
 
     function setNotifFilter(f, el) {
       NOTIF_FILTER = f;
@@ -3533,7 +3957,8 @@
         XLSX.utils.book_append_sheet(wb, ws, 'UERIS Cities');
         XLSX.writeFile(wb, `UERIS_Report_${new Date().toISOString().slice(0, 10)}.xlsx`);
         closeReportModal();
-      } catch (e) { alert('Excel export failed — the xlsx library may not have loaded. Check your internet connection.') }
+        toast('Excel report downloaded', 'UERIS_Report.xlsx', 'success');
+      } catch (e) { toast('Excel export failed', 'The xlsx library may not have loaded — check your connection.', 'error') }
     }
 
     async function generatePDF() {
@@ -3577,7 +4002,8 @@
 
         doc.save(`UERIS_Report_${new Date().toISOString().slice(0, 10)}.pdf`);
         closeReportModal();
-      } catch (e) { alert('PDF export failed — the jsPDF library may not have loaded. Check your internet connection.') }
+        toast('PDF report downloaded', 'UERIS_Report.pdf', 'success');
+      } catch (e) { toast('PDF export failed', 'The jsPDF library may not have loaded — check your connection.', 'error') }
     }
 
     /* ── Standardized loading / empty / error state block (used across new panels) ── */
