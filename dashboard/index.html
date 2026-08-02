@@ -2186,6 +2186,105 @@
         right: 4vw;
       }
     }
+    /* ══════════════════════════ PHASE 3 ADDITIONS ══════════════════════════ */
+
+    .kc.clickable {
+      cursor: pointer;
+    }
+
+    .kc.clickable::after {
+      content: '→';
+      position: absolute;
+      bottom: 14px;
+      right: 16px;
+      font-size: 13px;
+      color: var(--txt3);
+      opacity: 0;
+      transform: translateX(-4px);
+      transition: all .2s;
+    }
+
+    .kc.clickable:hover::after {
+      opacity: 1;
+      transform: translateX(0);
+      color: var(--kc, var(--a1));
+    }
+
+    .modal-card-wide {
+      width: 620px;
+    }
+
+    .detail-body {
+      max-height: 60vh;
+      overflow-y: auto;
+      margin: -4px -6px 0;
+      padding: 4px 6px;
+    }
+
+    .detail-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 4px;
+      border-bottom: 1px solid var(--b1);
+      font-size: 12.5px;
+      cursor: pointer;
+      border-radius: 8px;
+    }
+
+    .detail-row:hover {
+      background: var(--s2);
+    }
+
+    .detail-row:last-child {
+      border-bottom: none;
+    }
+
+    /* Standardized loading / empty / error state block */
+    .state-block {
+      text-align: center;
+      padding: 46px 20px;
+      color: var(--txt2);
+    }
+
+    .state-block .sb-icon {
+      font-size: 32px;
+      margin-bottom: 10px;
+      opacity: .5;
+    }
+
+    .state-block .sb-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--txt);
+      margin-bottom: 4px;
+    }
+
+    .state-block .sb-sub {
+      font-size: 11.5px;
+      color: var(--txt3);
+    }
+
+    .state-block.err .sb-icon {
+      opacity: .8;
+    }
+
+    .state-block .sb-retry {
+      margin-top: 14px;
+      display: inline-block;
+      padding: 7px 16px;
+      border-radius: 9px;
+      background: var(--s2);
+      border: 1px solid var(--b2);
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--a1);
+      cursor: pointer;
+    }
+
+    .state-block .sb-retry:hover {
+      border-color: var(--b3);
+    }
   </style>
 </head>
 
@@ -2256,22 +2355,22 @@
       <div class="pipe-row" id="pipeRow"></div>
 
       <div class="kr" id="kx">
-        <div class="kc" style="--kc:var(--a1);--ki:'🏙️';animation-delay:.05s">
+        <div class="kc clickable" onclick="detailCitiesMonitored()" style="--kc:var(--a1);--ki:'🏙️';animation-delay:.05s">
           <div class="kl">Cities Monitored</div>
           <div class="kv" id="kx1" style="color:var(--a1)">—</div>
           <div class="kh">Live streams active</div>
         </div>
-        <div class="kc" style="--kc:var(--ok);--ki:'💚';animation-delay:.1s">
+        <div class="kc clickable" onclick="detailSystemHealth()" style="--kc:var(--ok);--ki:'💚';animation-delay:.1s">
           <div class="kl">System Health</div>
           <div class="kv" id="kx2" style="color:var(--ok)">—</div>
           <div class="kh" id="kx2b">Batch + speed layer</div>
         </div>
-        <div class="kc" style="--kc:var(--a4);--ki:'⚠️';animation-delay:.15s">
+        <div class="kc clickable" onclick="detailAnomalies()" style="--kc:var(--a4);--ki:'⚠️';animation-delay:.15s">
           <div class="kl">Active Anomalies</div>
           <div class="kv" id="kx3" style="color:var(--a4)">—</div>
           <div class="kh">Isolation Forest detected</div>
         </div>
-        <div class="kc" style="--kc:var(--warn);--ki:'📡';animation-delay:.2s">
+        <div class="kc clickable" onclick="detailFreshness()" style="--kc:var(--warn);--ki:'📡';animation-delay:.2s">
           <div class="kl">Streaming Freshness</div>
           <div class="kv" id="kx4" style="color:var(--warn)">—</div>
           <div class="kh" id="kx4b">Readings within 30 min</div>
@@ -2321,6 +2420,7 @@
       </div>
       <div class="map-wrap">
         <div id="leafletMap" style="height:100%"></div>
+        <div id="mapEmptyState" class="state-block" style="display:none;position:absolute;inset:0;z-index:450;background:var(--bg)"></div>
         <div class="map-legend">
           <span><i style="background:#22d47a"></i>Low</span>
           <span><i style="background:#fbbf24"></i>Moderate</span>
@@ -2342,22 +2442,22 @@
         <button class="fchip" data-risk="Low" onclick="setRiskFilter('Low',this)">Low</button>
       </div>
       <div class="kr" id="kr">
-        <div class="kc" style="--kc:var(--a1);--ki:'🏙️';animation-delay:.05s">
+        <div class="kc clickable" onclick="detailCitiesMonitored()" style="--kc:var(--a1);--ki:'🏙️';animation-delay:.05s">
           <div class="kl">Cities Monitored</div>
           <div class="kv" id="kc1" style="color:var(--a1)">—</div>
           <div class="kh">Live streams active</div>
         </div>
-        <div class="kc" style="--kc:var(--a4);--ki:'⚠️';animation-delay:.1s">
+        <div class="kc clickable" onclick="detailAnomalies()" style="--kc:var(--a4);--ki:'⚠️';animation-delay:.1s">
           <div class="kl">ML Anomalies</div>
           <div class="kv" id="kc2" style="color:var(--a4)">—</div>
           <div class="kh">Isolation Forest detected</div>
         </div>
-        <div class="kc" style="--kc:var(--warn);--ki:'📊';animation-delay:.15s">
+        <div class="kc clickable" onclick="detailAvgStress()" style="--kc:var(--warn);--ki:'📊';animation-delay:.15s">
           <div class="kl">Avg Stress Index</div>
           <div class="kv" id="kc3" style="color:var(--warn)">—</div>
           <div class="kh">Across all live cities</div>
         </div>
-        <div class="kc" style="--kc:var(--ok);--ki:'🏅';animation-delay:.2s">
+        <div class="kc clickable" onclick="detailHealthiestCity()" style="--kc:var(--ok);--ki:'🏅';animation-delay:.2s">
           <div class="kl">Healthiest City</div>
           <div class="kv" id="kc4" style="color:var(--ok);font-size:22px">—</div>
           <div class="kh" id="kc4b">Score —</div>
@@ -2639,6 +2739,16 @@
     </div>
   </div>
 
+  <!-- DETAIL DRILL-DOWN MODAL -->
+  <div class="modal-bg" id="detailModal">
+    <div class="modal-card modal-card-wide">
+      <h3 id="detailTitle">Details</h3>
+      <div class="msub" id="detailSub"></div>
+      <div class="detail-body" id="detailBody"></div>
+      <div class="modal-close-row" style="margin-top:16px"><button onclick="closeDetail()">Close</button></div>
+    </div>
+  </div>
+
   <!-- REPORT MODAL -->
   <div class="modal-bg" id="reportModal">
     <div class="modal-card">
@@ -2679,7 +2789,7 @@
 
     const API = "/api";
     const MO = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    let CHS = {}, CD = {}, SEL = null, ALERTS = [], RISK_FILTER = 'all', LEAFMAP = null, MARKERS = {};
+    let CHS = {}, CD = {}, SEL = null, ALERTS = [], RISK_FILTER = 'all', LEAFMAP = null, MARKERS = {}, LAST_HEALTH = null, LAST_INSIGHTS = null;
     let FLAGS = { cmp: false, hist: false, fc: false, corr: false, rnk: false, map: false, exec: false };
 
     /* ── Inline SVG icon set (single source, no external icon-font dependency) ── */
@@ -3088,6 +3198,7 @@
           fetch(`${API}/health`).then(r => r.json()),
           fetch(`${API}/ai/insights`).then(r => r.json()),
         ]);
+        LAST_HEALTH = health; LAST_INSIGHTS = insights;
 
         document.getElementById('kx1').textContent = cities.length || health.speed_layer?.documents || '—';
 
@@ -3225,6 +3336,9 @@
     function loadMap() {
       initMapIfNeeded();
       updateMapMarkers();
+      const hasGeo = Object.values(CD).some(c => c.lat != null && c.lon != null);
+      document.getElementById('mapEmptyState').style.cssText = hasGeo ? 'display:none' : 'display:flex;flex-direction:column;align-items:center;justify-content:center;position:absolute;inset:0;z-index:450;background:var(--bg)';
+      if (!hasGeo) document.getElementById('mapEmptyState').innerHTML = stateBlock('empty', 'No city location data yet', 'Waiting for the batch/speed layers to populate.');
       setTimeout(() => LEAFMAP && LEAFMAP.invalidateSize(), 80);
     }
 
@@ -3466,9 +3580,106 @@
       } catch (e) { alert('PDF export failed — the jsPDF library may not have loaded. Check your internet connection.') }
     }
 
+    /* ── Standardized loading / empty / error state block (used across new panels) ── */
+    function stateBlock(type, title, sub, retryFn) {
+      const icon = type === 'error' ? '⚠️' : type === 'empty' ? '📭' : '⏳';
+      const retryHtml = retryFn ? `<div class="sb-retry" onclick="${retryFn}">Retry</div>` : '';
+      return `<div class="state-block ${type === 'error' ? 'err' : ''}">
+        <div class="sb-icon">${icon}</div>
+        <div class="sb-title">${title}</div>
+        <div class="sb-sub">${sub || ''}</div>
+        ${retryHtml}
+      </div>`;
+    }
+
+    /* ── KPI card drill-downs (Executive + Overview) — reuse already-fetched CD/ALERTS/health ── */
+    function openDetail(title, sub, bodyHtml) {
+      document.getElementById('detailTitle').textContent = title;
+      document.getElementById('detailSub').textContent = sub || '';
+      document.getElementById('detailBody').innerHTML = bodyHtml;
+      document.getElementById('detailModal').classList.add('show');
+    }
+    function closeDetail() { document.getElementById('detailModal').classList.remove('show') }
+
+    function detailCitiesMonitored() {
+      const cities = Object.values(CD);
+      if (!cities.length) return openDetail('Cities Monitored', '', stateBlock('empty', 'No city data yet', 'The batch/speed layers may still be starting up.'));
+      const rows = cities.sort((a, b) => a.city.localeCompare(b.city)).map(c => `
+        <div class="detail-row" onclick="closeDetail();goToCity('${c.city}')">
+          <span>${c.city}</span>
+          <span style="color:${rc(c.current_risk)};font-family:var(--f2)">AQI ${c.current_aqi?.toFixed(0) ?? '—'} · ${c.current_risk || 'N/A'}</span>
+        </div>`).join('');
+      openDetail('Cities Monitored', `${cities.length} cities with live streams`, rows);
+    }
+
+    function detailSystemHealth() {
+      const h = LAST_HEALTH;
+      if (!h) return openDetail('System Health', '', stateBlock('loading', 'Loading pipeline status…'));
+      const bl = h.batch_layer || {}, sl = h.speed_layer || {};
+      const rows = [
+        { name: 'Batch Layer', ok: !!bl.ready, sub: `${bl.documents || 0} documents in batch_views` },
+        { name: 'Speed Layer', ok: !!sl.ready, sub: `${sl.documents || 0} live cities, ${sl.fresh_readings || 0} fresh` },
+        { name: 'Correlations', ok: !!h.correlations?.ready, sub: h.correlations?.ready ? 'Ready' : 'Not computed yet' },
+        { name: 'Data Quality', ok: !!h.data_quality?.ready, sub: h.data_quality?.ready ? 'Ready' : 'Not computed yet' },
+      ].map(p => `<div class="detail-row" style="cursor:default">
+          <span>${p.ok ? '🟢' : '🔴'} ${p.name}</span>
+          <span style="font-family:var(--f2);color:var(--txt3)">${p.sub}</span>
+        </div>`).join('');
+      openDetail('System Health', 'Live status of each pipeline layer', rows);
+    }
+
+    function detailAnomalies() {
+      const cities = Object.values(CD).filter(c => c.is_anomaly);
+      if (!cities.length) return openDetail('Active Anomalies', '', stateBlock('empty', 'No anomalies right now', 'All cities are within their expected ranges.'));
+      const rows = cities.map(c => `
+        <div class="detail-row" onclick="closeDetail();goToCity('${c.city}')">
+          <span>⚠ ${c.city}</span>
+          <span style="color:${rc(c.current_risk)};font-family:var(--f2)">${c.anomaly_method || 'threshold'} · ${c.current_risk}</span>
+        </div>`).join('');
+      openDetail('Active Anomalies', `${cities.length} ${cities.length === 1 ? 'city' : 'cities'} flagged by ML models`, rows);
+    }
+
+    function detailFreshness() {
+      const cities = Object.values(CD);
+      if (!cities.length) return openDetail('Streaming Freshness', '', stateBlock('empty', 'No streaming data yet'));
+      const rows = cities.sort((a, b) => (b.is_fresh === true) - (a.is_fresh === true)).map(c => `
+        <div class="detail-row" onclick="closeDetail();goToCity('${c.city}')">
+          <span>${c.city}</span>
+          <span style="font-family:var(--f2);color:${c.is_fresh ? 'var(--ok)' : 'var(--txt3)'}">${c.is_fresh ? '● Fresh' : '○ Stale'}</span>
+        </div>`).join('');
+      openDetail('Streaming Freshness', 'Per-city speed-layer freshness (30 min window)', rows);
+    }
+
+    function detailAvgStress() {
+      const cities = Object.values(CD).filter(c => c.current_usi != null);
+      if (!cities.length) return openDetail('Average Stress Index', '', stateBlock('empty', 'No USI data yet'));
+      const rows = [...cities].sort((a, b) => (b.current_usi || 0) - (a.current_usi || 0)).map(c => `
+        <div class="detail-row" onclick="closeDetail();goToCity('${c.city}')">
+          <span>${c.city}</span>
+          <span style="color:${rc(c.current_risk)};font-family:var(--f2)">${c.current_usi?.toFixed(1)}</span>
+        </div>`).join('');
+      const avg = (cities.reduce((s, c) => s + c.current_usi, 0) / cities.length).toFixed(1);
+      openDetail('Average Stress Index', `System average: ${avg} across ${cities.length} cities`, rows);
+    }
+
+    function detailHealthiestCity() {
+      const cities = Object.values(CD).filter(c => c.health_score != null);
+      if (!cities.length) return openDetail('Healthiest City', '', stateBlock('empty', 'No health score data yet'));
+      const rows = [...cities].sort((a, b) => (b.health_score || 0) - (a.health_score || 0)).slice(0, 15).map(c => `
+        <div class="detail-row" onclick="closeDetail();goToCity('${c.city}')">
+          <span>${c.city}</span>
+          <span style="color:var(--ok);font-family:var(--f2)">${c.health_score?.toFixed(0)}/100</span>
+        </div>`).join('');
+      openDetail('Healthiest Cities', 'Ranked by composite health score', rows);
+    }
+
     document.getElementById('reportModal').addEventListener('click', e => {
       if (e.target.id === 'reportModal') closeReportModal();
     });
+    document.getElementById('detailModal').addEventListener('click', e => {
+      if (e.target.id === 'detailModal') closeDetail();
+    });
+
     document.addEventListener('click', e => {
       const fab = document.getElementById('aiFab'), panel = document.getElementById('aiPanel');
       if (panel.classList.contains('show') && !fab.contains(e.target) && !panel.contains(e.target)) panel.classList.remove('show');
