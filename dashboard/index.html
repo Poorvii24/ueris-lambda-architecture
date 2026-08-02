@@ -58,9 +58,10 @@
       --space-8: 32px;
       --space-10: 40px;
 
-      /* ── DESIGN SYSTEM: radius scale ── */
-      --radius-sm: 8px;
-      --radius-md: 12px;
+      /* ── DESIGN SYSTEM: radius scale (derived from full-project audit) ── */
+      --radius-xs: 8px;
+      --radius-sm: 10px;
+      --radius-md: 14px;
       --radius-lg: 18px;
       --radius-full: 999px;
 
@@ -152,7 +153,7 @@
     .lm {
       width: 38px;
       height: 38px;
-      border-radius: 11px;
+      border-radius: var(--radius-sm);
       background: linear-gradient(135deg, #0f2a60, #388bff);
       display: grid;
       place-items: center;
@@ -185,7 +186,7 @@
       gap: 7px;
       background: rgba(34, 212, 122, .07);
       border: 1px solid rgba(34, 212, 122, .18);
-      border-radius: 20px;
+      border-radius: var(--radius-full);
       padding: 5px 14px;
       font-size: 12px;
       font-weight: 600;
@@ -254,7 +255,7 @@
       border: none;
       cursor: pointer;
       border-bottom: 2px solid transparent;
-      transition: all .2s;
+      transition: all var(--dur-fast) var(--ease);
       white-space: nowrap
     }
 
@@ -317,7 +318,7 @@
       box-shadow: var(--shadow-sm);
       position: relative;
       overflow: hidden;
-      transition: border-color .3s, transform .3s;
+      transition: border-color var(--dur-base) var(--ease), transform var(--dur-base) var(--ease);
       animation: ru .5s ease both
     }
 
@@ -388,19 +389,19 @@
     .cc {
       background: var(--s1);
       border: 1px solid var(--b1);
-      border-radius: 20px;
+      border-radius: var(--radius-lg);
       padding: 22px;
       cursor: pointer;
       position: relative;
       overflow: hidden;
-      transition: all .3s;
+      transition: all var(--dur-base) var(--ease);
       animation: ru .5s ease both
     }
 
     .cc:hover {
       border-color: var(--b2);
       transform: translateY(-5px);
-      box-shadow: 0 20px 60px rgba(0, 0, 0, .6)
+      box-shadow: var(--shadow-lg)
     }
 
     .cc.on {
@@ -462,7 +463,7 @@
 
     .mx {
       background: rgba(255, 255, 255, .028);
-      border-radius: 10px;
+      border-radius: var(--radius-sm);
       padding: 9px 11px
     }
 
@@ -498,7 +499,7 @@
     .cat {
       background: rgba(255, 61, 107, .07);
       border: 1px solid rgba(255, 61, 107, .22);
-      border-radius: 8px;
+      border-radius: var(--radius-xs);
       padding: 6px 10px;
       font-size: 10px;
       color: var(--a4);
@@ -513,7 +514,7 @@
     .dp {
       background: var(--s1);
       border: 1px solid var(--b1);
-      border-radius: 20px;
+      border-radius: var(--radius-lg);
       overflow: hidden;
       margin-bottom: 20px;
       animation: ru .35s ease
@@ -555,7 +556,7 @@
 
     .mis {
       padding: 2px 8px;
-      border-radius: 8px;
+      border-radius: var(--radius-xs);
       font-weight: 600;
       font-size: 10px
     }
@@ -632,7 +633,7 @@
     .adv {
       background: var(--s1);
       border: 1px solid var(--b1);
-      border-radius: 20px;
+      border-radius: var(--radius-lg);
       padding: 24px 28px;
       margin-bottom: 20px;
       animation: ru .4s ease .1s both
@@ -655,7 +656,7 @@
 
     .avc {
       background: var(--s2);
-      border-radius: 14px;
+      border-radius: var(--radius-md);
       padding: 16px 18px;
       border-left: 3px solid var(--ic, var(--a1));
       transition: transform .2s
@@ -720,7 +721,7 @@
     .al {
       background: var(--s1);
       border: 1px solid var(--b1);
-      border-radius: 14px;
+      border-radius: var(--radius-md);
       padding: 16px 20px;
       margin-bottom: 10px;
       display: flex;
@@ -737,7 +738,7 @@
     .ali {
       width: 44px;
       height: 44px;
-      border-radius: 12px;
+      border-radius: var(--radius-md);
       display: grid;
       place-items: center;
       font-size: 20px;
@@ -772,7 +773,7 @@
       color: var(--txt2);
       background: var(--s1);
       border: 1px solid var(--b1);
-      border-radius: 18px
+      border-radius: var(--radius-lg)
     }
 
     .rLow {
@@ -808,7 +809,7 @@
     .offl {
       background: rgba(251, 191, 36, .07);
       border: 1px solid rgba(251, 191, 36, .18);
-      border-radius: 12px;
+      border-radius: var(--radius-md);
       padding: 14px 20px;
       margin-bottom: 16px;
       font-size: 13px;
@@ -941,7 +942,7 @@
     .fc-card {
       background: var(--s1);
       border: 1px solid var(--b1);
-      border-radius: 18px;
+      border-radius: var(--radius-lg);
       padding: 22px;
       animation: ru .4s ease both
     }
@@ -969,7 +970,7 @@
     .corr-card {
       background: var(--s1);
       border: 1px solid var(--b1);
-      border-radius: 18px;
+      border-radius: var(--radius-lg);
       padding: 22px
     }
 
@@ -1008,7 +1009,7 @@
     .qc {
       background: var(--s1);
       border: 1px solid var(--b1);
-      border-radius: 14px;
+      border-radius: var(--radius-md);
       padding: 18px 20px
     }
 
@@ -1029,7 +1030,7 @@
     .arch-hero {
       background: linear-gradient(135deg, rgba(56, 139, 255, .06), rgba(0, 229, 200, .04));
       border: 1px solid var(--b1);
-      border-radius: 20px;
+      border-radius: var(--radius-lg);
       padding: 32px 36px;
       margin-bottom: 24px;
       animation: ru .4s ease
@@ -1045,11 +1046,11 @@
     .arch-card {
       background: var(--s1);
       border: 1px solid var(--b1);
-      border-radius: 18px;
+      border-radius: var(--radius-lg);
       padding: 24px;
       position: relative;
       overflow: hidden;
-      transition: border-color .3s, transform .3s
+      transition: border-color var(--dur-base) var(--ease), transform var(--dur-base) var(--ease)
     }
 
     .arch-card:hover {
@@ -1096,7 +1097,7 @@
       color: var(--a1);
       background: rgba(56, 139, 255, .06);
       border: 1px solid rgba(56, 139, 255, .15);
-      border-radius: 12px;
+      border-radius: var(--radius-md);
       padding: 16px 22px;
       margin: 14px 0;
       letter-spacing: .4px
@@ -1111,7 +1112,7 @@
 
     .uw {
       background: var(--s2);
-      border-radius: 14px;
+      border-radius: var(--radius-md);
       padding: 16px;
       text-align: center;
       border: 1px solid var(--b1)
@@ -1140,7 +1141,7 @@
     .ast {
       background: var(--s1);
       border: 1px solid var(--b1);
-      border-radius: 14px;
+      border-radius: var(--radius-md);
       padding: 16px 20px;
       display: flex;
       align-items: center;
@@ -1247,7 +1248,7 @@
       width: 100%;
       text-align: left;
       padding: 10px 12px;
-      border-radius: 10px;
+      border-radius: var(--radius-sm);
       font-size: 13px;
       font-weight: 500;
       border-bottom: none;
@@ -1317,13 +1318,13 @@
       width: 100%;
       background: var(--s2);
       border: 1px solid var(--b1);
-      border-radius: 10px;
+      border-radius: var(--radius-sm);
       padding: 8px 12px 8px 36px;
       font-family: var(--f1);
       font-size: 13px;
       color: var(--txt);
       outline: none;
-      transition: border-color .2s, background .2s;
+      transition: border-color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
     }
 
     .gsearch input:focus {
@@ -1340,12 +1341,12 @@
       position: relative;
       width: 44px;
       height: 24px;
-      border-radius: 20px;
+      border-radius: var(--radius-full);
       background: var(--s3);
       border: 1px solid var(--b1);
       cursor: pointer;
       flex-shrink: 0;
-      transition: background .25s;
+      transition: background var(--dur-base) var(--ease);
     }
 
     .tswitch .knob {
@@ -1359,7 +1360,7 @@
       display: grid;
       place-items: center;
       font-size: 10px;
-      transition: transform .25s;
+      transition: transform var(--dur-base) var(--ease);
     }
 
     [data-theme="light"] .tswitch .knob {
@@ -1372,7 +1373,7 @@
       position: relative;
       width: 36px;
       height: 36px;
-      border-radius: 10px;
+      border-radius: var(--radius-sm);
       background: var(--s2);
       border: 1px solid var(--b1);
       display: grid;
@@ -1399,7 +1400,7 @@
       min-width: 16px;
       height: 16px;
       padding: 0 3px;
-      border-radius: 8px;
+      border-radius: var(--radius-xs);
       background: var(--bad);
       color: #fff;
       font-size: 9px;
@@ -1423,8 +1424,8 @@
       overflow-y: auto;
       background: var(--s1);
       border: 1px solid var(--b2);
-      border-radius: 14px;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, .4);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-lg);
       display: none;
       z-index: 300;
       padding: 8px;
@@ -1449,7 +1450,7 @@
       align-items: center;
       gap: 10px;
       padding: 9px 10px;
-      border-radius: 9px;
+      border-radius: var(--radius-xs);
       cursor: pointer;
     }
 
@@ -1492,7 +1493,7 @@
       background: linear-gradient(90deg, var(--s2) 25%, var(--s3) 50%, var(--s2) 75%);
       background-size: 200% 100%;
       animation: shimmer 1.4s infinite;
-      border-radius: 10px;
+      border-radius: var(--radius-sm);
     }
 
     @keyframes shimmer {
@@ -1507,14 +1508,14 @@
 
     .skel-card {
       height: 210px;
-      border-radius: 18px;
+      border-radius: var(--radius-lg);
       border: 1px solid var(--b1);
     }
 
     /* Map */
     .map-wrap {
       height: 600px;
-      border-radius: 18px;
+      border-radius: var(--radius-lg);
       overflow: hidden;
       border: 1px solid var(--b1);
       position: relative;
@@ -1528,7 +1529,7 @@
       z-index: 400;
       background: rgba(7, 13, 28, .9);
       border: 1px solid var(--b2);
-      border-radius: 12px;
+      border-radius: var(--radius-md);
       padding: 10px 14px;
       font-size: 11px;
       display: flex;
@@ -1559,7 +1560,7 @@
     .leaflet-popup-content-wrapper {
       background: var(--s1);
       color: var(--txt);
-      border-radius: 12px;
+      border-radius: var(--radius-md);
       border: 1px solid var(--b2);
     }
 
@@ -1578,7 +1579,7 @@
       font-size: 10px;
       font-weight: 700;
       padding: 2px 8px;
-      border-radius: 20px;
+      border-radius: var(--radius-full);
       margin-bottom: 8px;
     }
 
@@ -1611,7 +1612,7 @@
     .insight-box {
       background: linear-gradient(135deg, rgba(56, 139, 255, .08), rgba(0, 229, 200, .05));
       border: 1px solid var(--b2);
-      border-radius: 18px;
+      border-radius: var(--radius-lg);
       padding: 22px 24px;
       font-size: 13.5px;
       line-height: 1.65;
@@ -1647,7 +1648,7 @@
       border: 1px solid var(--b1);
       color: var(--txt2);
       cursor: pointer;
-      transition: all .15s;
+      transition: all var(--dur-fast) var(--ease);
     }
 
     .fchip:hover {
@@ -1847,7 +1848,7 @@
       width: 100%;
       background: var(--s2);
       border: 1px solid var(--b1);
-      border-radius: 10px;
+      border-radius: var(--radius-sm);
       padding: 8px 12px;
       font-family: var(--f1);
       font-size: 12.5px;
@@ -1866,7 +1867,7 @@
       right: 0;
       background: var(--s1);
       border: 1px solid var(--b2);
-      border-radius: 10px;
+      border-radius: var(--radius-sm);
       overflow: hidden;
       z-index: 500;
       display: none;
@@ -1898,7 +1899,7 @@
       display: flex;
       align-items: center;
       gap: 6px;
-      transition: all .15s;
+      transition: all var(--dur-fast) var(--ease);
     }
 
     .toolbtn:hover {
@@ -1956,7 +1957,7 @@
       min-width: 140px;
       background: var(--s1);
       border: 1px solid var(--b1);
-      border-radius: 12px;
+      border-radius: var(--radius-md);
       padding: 12px 14px;
       display: flex;
       align-items: center;
@@ -2007,7 +2008,7 @@
 
     .ndrop-tab {
       padding: 5px 11px;
-      border-radius: 16px;
+      border-radius: var(--radius-md);
       font-size: 10.5px;
       font-weight: 600;
       background: var(--s2);
@@ -2046,7 +2047,7 @@
       cursor: pointer;
       box-shadow: 0 10px 30px rgba(56, 139, 255, .4);
       z-index: 500;
-      transition: transform .2s;
+      transition: transform var(--dur-fast) var(--ease);
       color: #fff;
     }
 
@@ -2067,8 +2068,8 @@
       height: 520px;
       background: var(--s1);
       border: 1px solid var(--b2);
-      border-radius: 18px;
-      box-shadow: 0 24px 60px rgba(0, 0, 0, .45);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
       display: none;
       flex-direction: column;
       overflow: hidden;
@@ -2119,7 +2120,7 @@
     .ai-msg {
       max-width: 85%;
       padding: 10px 13px;
-      border-radius: 14px;
+      border-radius: var(--radius-md);
       font-size: 12.5px;
       line-height: 1.55;
       white-space: pre-line;
@@ -2149,7 +2150,7 @@
     .ai-sug-chip {
       font-size: 10.5px;
       padding: 5px 10px;
-      border-radius: 14px;
+      border-radius: var(--radius-md);
       background: var(--s2);
       border: 1px solid var(--b1);
       color: var(--txt2);
@@ -2172,7 +2173,7 @@
       flex: 1;
       background: var(--s2);
       border: 1px solid var(--b1);
-      border-radius: 10px;
+      border-radius: var(--radius-sm);
       padding: 9px 12px;
       font-size: 12.5px;
       color: var(--txt);
@@ -2187,7 +2188,7 @@
     .ai-send {
       width: 38px;
       height: 38px;
-      border-radius: 10px;
+      border-radius: var(--radius-sm);
       background: var(--a1);
       color: #fff;
       display: grid;
@@ -2259,11 +2260,11 @@
     .report-opt {
       border: 1px solid var(--b1);
       background: var(--s2);
-      border-radius: 12px;
+      border-radius: var(--radius-md);
       padding: 16px 10px;
       text-align: center;
       cursor: pointer;
-      transition: all .15s;
+      transition: all var(--dur-fast) var(--ease);
     }
 
     .report-opt:hover {
@@ -2320,7 +2321,7 @@
       color: var(--txt3);
       opacity: 0;
       transform: translateX(-4px);
-      transition: all .2s;
+      transition: all var(--dur-fast) var(--ease);
     }
 
     .kc.clickable:hover::after {
@@ -2348,7 +2349,7 @@
       border-bottom: 1px solid var(--b1);
       font-size: 12.5px;
       cursor: pointer;
-      border-radius: 8px;
+      border-radius: var(--radius-xs);
     }
 
     .detail-row:hover {
@@ -2392,7 +2393,7 @@
       margin-top: 14px;
       display: inline-block;
       padding: 7px 16px;
-      border-radius: 9px;
+      border-radius: var(--radius-xs);
       background: var(--s2);
       border: 1px solid var(--b2);
       font-size: 11.5px;
@@ -2801,7 +2802,7 @@
         </div>
       </div>
       <div id="da">
-        <div class="es" style="background:var(--s1);border:1px solid var(--b1);border-radius:20px;padding:50px">
+        <div class="es" style="background:var(--s1);border:1px solid var(--b1);border-radius:var(--radius-full);padding:50px">
           <div style="font-size:36px;margin-bottom:12px;opacity:.25">👆</div>
           <div>Click any city card for detailed analytics</div>
         </div>
@@ -2939,7 +2940,7 @@
             Layer 1</div>
           <div style="font-size:18px;font-weight:800;margin:4px 0 10px">Batch Layer</div>
           <div
-            style="font-size:10px;font-weight:700;padding:3px 10px;background:rgba(56,139,255,.1);color:var(--a1);border-radius:10px;display:inline-block;margin-bottom:12px">
+            style="font-size:10px;font-weight:700;padding:3px 10px;background:rgba(56,139,255,.1);color:var(--a1);border-radius:var(--radius-sm);display:inline-block;margin-bottom:12px">
             Apache PySpark</div>
           <div class="arch-kv">
             <span class="arch-k">Input</span><span class="arch-v">Kaggle India AQ CSV (2015–2020)</span>
@@ -2955,7 +2956,7 @@
             Layer 2</div>
           <div style="font-size:18px;font-weight:800;margin:4px 0 10px">Speed Layer</div>
           <div
-            style="font-size:10px;font-weight:700;padding:3px 10px;background:rgba(0,229,200,.1);color:var(--a2);border-radius:10px;display:inline-block;margin-bottom:12px">
+            style="font-size:10px;font-weight:700;padding:3px 10px;background:rgba(0,229,200,.1);color:var(--a2);border-radius:var(--radius-sm);display:inline-block;margin-bottom:12px">
             PySpark Micro-batch</div>
           <div class="arch-kv">
             <span class="arch-k">Input</span><span class="arch-v">Open-Meteo + WAQI (live)</span>
@@ -2971,7 +2972,7 @@
             Layer 3</div>
           <div style="font-size:18px;font-weight:800;margin:4px 0 10px">Serving Layer</div>
           <div
-            style="font-size:10px;font-weight:700;padding:3px 10px;background:rgba(167,139,250,.1);color:var(--a5);border-radius:10px;display:inline-block;margin-bottom:12px">
+            style="font-size:10px;font-weight:700;padding:3px 10px;background:rgba(167,139,250,.1);color:var(--a5);border-radius:var(--radius-sm);display:inline-block;margin-bottom:12px">
             Flask REST API</div>
           <div class="arch-kv">
             <span class="arch-k">Merge</span><span class="arch-v">Realtime priority · batch fallback (30-min
@@ -2983,7 +2984,7 @@
         </div>
       </div>
       <div class="sh">USI formula</div>
-      <div style="background:var(--s1);border:1px solid var(--b1);border-radius:18px;padding:28px 32px">
+      <div style="background:var(--s1);border:1px solid var(--b1);border-radius:var(--radius-lg);padding:28px 32px">
         <div style="font-size:15px;font-weight:700;margin-bottom:6px">Urban Stress Index — original composite metric
         </div>
         <div class="usi-formula">USI = ( 0.5 × AQI_norm + 0.3 × Temp_norm + 0.2 × Hum_norm ) × 100</div>
@@ -3011,27 +3012,27 @@
         </div>
         <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:20px;text-align:center">
           <div
-            style="background:rgba(34,212,122,.08);border:1px solid rgba(34,212,122,.2);border-radius:10px;padding:10px">
+            style="background:rgba(34,212,122,.08);border:1px solid rgba(34,212,122,.2);border-radius:var(--radius-sm);padding:10px">
             <div style="font-weight:800;color:#22d47a">Low</div>
             <div style="font-size:11px;color:var(--txt2)">&lt; 20</div>
           </div>
           <div
-            style="background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);border-radius:10px;padding:10px">
+            style="background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);border-radius:var(--radius-sm);padding:10px">
             <div style="font-weight:800;color:#fbbf24">Moderate</div>
             <div style="font-size:11px;color:var(--txt2)">20–39</div>
           </div>
           <div
-            style="background:rgba(251,146,60,.08);border:1px solid rgba(251,146,60,.2);border-radius:10px;padding:10px">
+            style="background:rgba(251,146,60,.08);border:1px solid rgba(251,146,60,.2);border-radius:var(--radius-sm);padding:10px">
             <div style="font-weight:800;color:#fb923c">High</div>
             <div style="font-size:11px;color:var(--txt2)">40–59</div>
           </div>
           <div
-            style="background:rgba(255,61,107,.08);border:1px solid rgba(255,61,107,.2);border-radius:10px;padding:10px">
+            style="background:rgba(255,61,107,.08);border:1px solid rgba(255,61,107,.2);border-radius:var(--radius-sm);padding:10px">
             <div style="font-weight:800;color:#ff3d6b">Very High</div>
             <div style="font-size:11px;color:var(--txt2)">60–79</div>
           </div>
           <div
-            style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:10px;padding:10px">
+            style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:var(--radius-sm);padding:10px">
             <div style="font-weight:800;color:#ef4444">Severe</div>
             <div style="font-size:11px;color:var(--txt2)">≥ 80</div>
           </div>
@@ -3345,7 +3346,7 @@
         const d = await (await fetch(`/api/ranking`)).json();
         if (!d.ranking?.length) { wrap.innerHTML = '<div class="es">No ranking data</div>'; return }
         const medals = ['🥇', '🥈', '🥉'];
-        wrap.innerHTML = `<div style="background:var(--s1);border:1px solid var(--b1);border-radius:18px;overflow:hidden">
+        wrap.innerHTML = `<div style="background:var(--s1);border:1px solid var(--b1);border-radius:var(--radius-lg);overflow:hidden">
     <table class="rnk-table">
       <thead><tr>
         <th>Rank</th><th>City</th><th>Health Score</th>
@@ -3722,7 +3723,7 @@
       <div class="qc"><div class="qv" style="color:var(--a5)">${s.model_cities || 0}</div><div class="ql">ML Models Loaded</div></div>
     </div>
     <div class="sh" style="margin-top:8px">Per-city quality status</div>
-    <div style="background:var(--s1);border:1px solid var(--b1);border-radius:18px;overflow:hidden">
+    <div style="background:var(--s1);border:1px solid var(--b1);border-radius:var(--radius-lg);overflow:hidden">
     <table class="rnk-table" style="width:100%">
       <thead><tr>
         <th>City</th><th>Batch Records</th><th>Has Live</th><th>Is Fresh</th><th>Has ML Model</th><th>Model Trained On</th><th>Last Updated</th>
