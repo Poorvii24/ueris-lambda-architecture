@@ -2301,7 +2301,8 @@
       color: var(--kc, var(--a1));
     }
 
-    .kc.clickable:focus-visible {
+    .kc.clickable:focus-visible,
+    .a11y-btn:focus-visible {
       outline: 2px solid var(--a1);
       outline-offset: 2px;
     }
@@ -2950,7 +2951,7 @@
 
     <div class="main-col">
       <header class="topbar">
-        <div class="hamburger" id="hamburger" onclick="toggleSidebar()">
+        <div class="hamburger a11y-btn" id="hamburger" onclick="toggleSidebar()" role="button" tabindex="0" aria-label="Open navigation menu">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18" /></svg>
         </div>
         <div class="gsearch">
@@ -2960,9 +2961,9 @@
         <div class="hr2">
           <a class="hbtn" href="/api/export/csv" download>⬇ Export CSV</a>
           <span id="clk" style="font-family:var(--f2);font-size:13px;color:var(--txt2)">—</span>
-          <div class="tswitch" id="tswitch" onclick="toggleTheme()" title="Toggle theme"><div class="knob"></div></div>
+          <div class="tswitch a11y-btn" id="tswitch" onclick="toggleTheme()" title="Toggle theme" role="button" tabindex="0" aria-label="Toggle dark/light theme"><div class="knob"></div></div>
           <div style="position:relative">
-            <div class="nbell" id="nbell" onclick="toggleNotif()">
+            <div class="nbell a11y-btn" id="nbell" onclick="toggleNotif()" role="button" tabindex="0" aria-label="Notifications">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" /></svg>
               <div class="nbadge" id="nbadge">0</div>
             </div>
@@ -3364,7 +3365,7 @@
   </div><!-- /.app-shell -->
 
   <!-- AI ASSISTANT -->
-  <div class="ai-fab" id="aiFab" onclick="toggleAI()">
+  <div class="ai-fab a11y-btn" id="aiFab" onclick="toggleAI()" role="button" tabindex="0" aria-label="Open UERIS AI Assistant">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a5 5 0 0 0-5 5v2a5 5 0 0 0 10 0V7a5 5 0 0 0-5-5Z" /><path d="M6 12v1a6 6 0 0 0 12 0v-1M12 19v3M8 22h8" /></svg>
   </div>
   <div class="ai-panel" id="aiPanel">
@@ -3374,10 +3375,10 @@
         <div class="ai-head-t">UERIS Assistant <span class="ai-online-dot"></span></div>
         <div class="ai-head-s">Answers from your live data & AI models</div>
       </div>
-      <div class="ai-clear" onclick="clearAIChat()" title="Clear chat">
+      <div class="ai-clear a11y-btn" onclick="clearAIChat()" title="Clear chat" role="button" tabindex="0" aria-label="Clear chat history">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6" /></svg>
       </div>
-      <div class="ai-close" onclick="toggleAI()">✕</div>
+      <div class="ai-close a11y-btn" onclick="toggleAI()" role="button" tabindex="0" aria-label="Close AI Assistant">✕</div>
     </div>
     <div class="ai-body" id="aiBody"></div>
     <div class="ai-suggest" id="aiSuggest"></div>
@@ -3412,7 +3413,7 @@
         <h3 id="cfmTitle">Chart</h3>
         <div style="display:flex;align-items:center;gap:14px">
           <div class="chart-expand" onclick="downloadChartPNG('cfmCanvas', cfmFilename())" title="Download PNG"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" /></svg></div>
-          <div class="cfm-close" onclick="closeChartFullscreen()">✕</div>
+          <div class="cfm-close a11y-btn" onclick="closeChartFullscreen()" role="button" tabindex="0" aria-label="Close fullscreen chart">✕</div>
         </div>
       </div>
       <div class="cfm-canvas-wrap"><canvas id="cfmCanvas"></canvas></div>
@@ -3512,13 +3513,28 @@
     }
     renderSidebar();
 
-    /* Keyboard accessibility for interactive KPI cards */
+    /* Keyboard accessibility: Enter/Space activates any clickable card or icon-only
+       control (one delegated listener, not one per element) */
     document.querySelectorAll('.kc.clickable').forEach(card => {
       card.setAttribute('tabindex', '0');
       card.setAttribute('role', 'button');
-      card.addEventListener('keydown', e => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); card.click() }
-      });
+    });
+    document.addEventListener('keydown', e => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      const target = e.target.closest('.kc.clickable, .a11y-btn');
+      if (target) { e.preventDefault(); target.click() }
+    });
+
+    /* Escape closes whichever overlay is currently open, highest layer first */
+    document.addEventListener('keydown', e => {
+      if (e.key !== 'Escape') return;
+      if (document.getElementById('chartFullscreenModal').classList.contains('show')) return closeChartFullscreen();
+      if (document.getElementById('confirmModal').classList.contains('show')) return closeConfirm();
+      if (document.getElementById('reportModal').classList.contains('show')) return closeReportModal();
+      if (document.getElementById('detailModal').classList.contains('show')) return closeDetail();
+      if (document.getElementById('aiPanel').classList.contains('show')) return toggleAI();
+      if (document.getElementById('ndrop').classList.contains('show')) return toggleNotif();
+      if (document.querySelector('.sidebar').classList.contains('mobile-open')) return toggleSidebar(false);
     });
 
     function toggleSidebar(force) {
@@ -3720,7 +3736,7 @@
       const wrap = document.getElementById('rnk-wrap');
       try {
         const d = await (await fetch(`/api/ranking`)).json();
-        if (!d.ranking?.length) { wrap.innerHTML = '<div class="es">No ranking data</div>'; return }
+        if (!d.ranking?.length) { wrap.innerHTML = stateBlock('empty', 'No ranking data yet', 'Run the batch layer to populate city rankings.'); return }
         const medals = ['🥇', '🥈', '🥉'];
         wrap.innerHTML = `<div style="background:var(--s1);border:1px solid var(--b1);border-radius:var(--radius-lg);overflow:hidden">
     <table class="rnk-table">
@@ -3744,7 +3760,7 @@
         </tr>`;
         }).join('')}</tbody>
     </table></div>`;
-      } catch (e) { wrap.innerHTML = '<div class="es">Failed to load ranking</div>' }
+      } catch (e) { wrap.innerHTML = stateBlock('error', 'Failed to load ranking', 'The API may be unreachable.', 'buildRanking()') }
     }
 
     function goCity(city) {
@@ -3757,7 +3773,7 @@
       FLAGS.fc = true;
       const grid = document.getElementById('fc-grid');
       const cities = Object.values(CD);
-      if (!cities.length) { grid.innerHTML = '<div class="es" style="grid-column:1/-1">No data</div>'; return }
+      if (!cities.length) { grid.innerHTML = stateBlock('empty', 'No forecast data yet', 'Waiting for the batch layer to populate city data.'); return }
       grid.innerHTML = cities.map((c, i) => `<div class="fc-card" style="animation-delay:${i * .04}s"><div class="fc-city">${c.city}</div><div class="fc-sub">12-month USI forecast · avg ${c.avg_usi?.toFixed(1) || '—'}</div><canvas id="fc-${c.city}" style="max-height:160px"></canvas></div>`).join('');
       await new Promise(r => setTimeout(r, 100));
       for (const c of cities) {
@@ -3794,7 +3810,7 @@
     async function buildHist() {
       FLAGS.hist = true;
       const wrap = document.getElementById('hg');
-      const cities = Object.values(CD); if (!cities.length) { wrap.innerHTML = '<div class="es">No data</div>'; return }
+      const cities = Object.values(CD); if (!cities.length) { wrap.innerHTML = stateBlock('empty', 'No trend data yet', 'Waiting for the batch layer to populate city data.'); return }
       wrap.innerHTML = cities.map((c, i) => `<div class="gc" style="animation-delay:${i * .06}s"><div style="font-size:15px;font-weight:700;margin-bottom:3px">${c.city}</div><div style="font-size:11px;color:var(--txt2);margin-bottom:16px">AQI vs USI · 2015–2020</div><canvas id="hc-${c.city}" style="max-height:180px"></canvas></div>`).join('');
       await new Promise(r => setTimeout(r, 100));
       for (const c of cities) {
@@ -3818,8 +3834,8 @@
       FLAGS.corr = true;
       const grid = document.getElementById('corr-grid');
       const cities = Object.values(CD);
-      if (!cities.length) { grid.innerHTML = '<div class="es" style="grid-column:1/-1">No data</div>'; return }
-      grid.innerHTML = '<div class="es" style="grid-column:1/-1"><div class="loader"></div>Loading matrices…</div>';
+      if (!cities.length) { grid.innerHTML = stateBlock('empty', 'No city data yet', 'Waiting for the batch layer to populate city data.'); return }
+      grid.innerHTML = stateBlock('loading', 'Loading correlation matrices…');
       const results = [];
       for (const c of cities) {
         try {
@@ -3827,7 +3843,7 @@
           if (d.correlation?.matrix) results.push({ city: c.city, corr: d.correlation });
         } catch (e) { }
       }
-      if (!results.length) { grid.innerHTML = '<div class="es" style="grid-column:1/-1">No correlation data — run batch layer first</div>'; return }
+      if (!results.length) { grid.innerHTML = stateBlock('empty', 'No correlation data yet', 'Run the batch layer first to compute pollutant correlations.'); return }
       const labels = ['AQI', 'Temp', 'Hum', 'USI'];
       grid.innerHTML = results.map(r => {
         const m = r.corr.matrix || [];
@@ -4219,7 +4235,7 @@
         <td style="font-family:var(--f2);font-size:11px;color:var(--txt3)">${c.last_updated ? c.last_updated.slice(0, 19) : '—'}</td>
       </tr>`).join('')}</tbody>
     </table></div>`;
-      } catch (e) { wrap.innerHTML = '<div class="es">Failed to load quality report</div>' }
+      } catch (e) { wrap.innerHTML = stateBlock('error', 'Failed to load quality report', 'The API may be unreachable.', 'buildQuality()') }
     }
 
     /* ARCHITECTURE STATUS */
