@@ -2301,8 +2301,7 @@
       color: var(--kc, var(--a1));
     }
 
-    .kc.clickable:focus-visible,
-    .a11y-btn:focus-visible {
+    [role="button"]:focus-visible {
       outline: 2px solid var(--a1);
       outline-offset: 2px;
     }
@@ -2970,12 +2969,12 @@
             <div class="ndrop" id="ndrop">
               <div class="ndrop-h">Notification Center</div>
               <div class="ndrop-tabs">
-                <div class="ndrop-tab on" data-f="all" onclick="setNotifFilter('all',this)">All</div>
-                <div class="ndrop-tab" data-f="critical" onclick="setNotifFilter('critical',this)">Critical</div>
-                <div class="ndrop-tab" data-f="high" onclick="setNotifFilter('high',this)">High</div>
+                <div class="ndrop-tab on" data-f="all" onclick="setNotifFilter('all',this)" role="button" tabindex="0">All</div>
+                <div class="ndrop-tab" data-f="critical" onclick="setNotifFilter('critical',this)" role="button" tabindex="0">Critical</div>
+                <div class="ndrop-tab" data-f="high" onclick="setNotifFilter('high',this)" role="button" tabindex="0">High</div>
               </div>
               <div id="ndrop-list"><div class="ndrop-empty">No alerts yet — monitoring in progress</div></div>
-              <div class="ndrop-clear" onclick="clearAlertHistory()">Clear history</div>
+              <div class="ndrop-clear" onclick="clearAlertHistory()" role="button" tabindex="0">Clear history</div>
             </div>
           </div>
           <div class="lpill" id="lpill">
@@ -3036,8 +3035,8 @@
       <div class="sh">Risk level distribution — all monitored cities</div>
       <div class="g2">
         <div class="gc"><div class="gct">Cities by current risk level<div style="display:flex;gap:4px">
-          <div class="chart-expand" onclick="downloadChartPNG('ch-exec1','UERIS_Risk_Distribution')" title="Download PNG"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" /></svg></div>
-          <div class="chart-expand" onclick="openChartFullscreen('ch-exec1','Risk Level Distribution')" title="Expand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" /></svg></div>
+          <div class="chart-expand" onclick="downloadChartPNG('ch-exec1','UERIS_Risk_Distribution')" title="Download PNG" role="button" tabindex="0" aria-label="Download chart as PNG"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" /></svg></div>
+          <div class="chart-expand" onclick="openChartFullscreen('ch-exec1','Risk Level Distribution')" title="Expand" role="button" tabindex="0" aria-label="Expand chart to fullscreen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" /></svg></div>
         </div></div><canvas id="ch-exec1" style="max-height:220px"></canvas></div>
         <div class="gc">
           <div class="gct">Recent alert activity</div>
@@ -3053,7 +3052,7 @@
         <div class="map-search">
           <input id="mapSearchInput" type="text" placeholder="Jump to a city…" autocomplete="off"
             oninput="mapSearchInput_(this.value)" onfocus="mapSearchInput_(this.value)" onkeydown="mapSearchKeydown(event)">
-          <div class="msug-clear" id="mapSearchClear" onclick="clearMapSearch()" style="display:none">✕</div>
+          <div class="msug-clear" id="mapSearchClear" onclick="clearMapSearch()" style="display:none" role="button" tabindex="0" aria-label="Clear search">✕</div>
           <div class="msug" id="mapSug"></div>
         </div>
         <button class="toolbtn on" id="mapAllChip" onclick="setMapRiskFilter('all',this)" data-risk="all">All</button>
@@ -3412,7 +3411,7 @@
       <div class="cfm-head">
         <h3 id="cfmTitle">Chart</h3>
         <div style="display:flex;align-items:center;gap:14px">
-          <div class="chart-expand" onclick="downloadChartPNG('cfmCanvas', cfmFilename())" title="Download PNG"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" /></svg></div>
+          <div class="chart-expand" onclick="downloadChartPNG('cfmCanvas', cfmFilename())" title="Download PNG" role="button" tabindex="0" aria-label="Download chart as PNG"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" /></svg></div>
           <div class="cfm-close a11y-btn" onclick="closeChartFullscreen()" role="button" tabindex="0" aria-label="Close fullscreen chart">✕</div>
         </div>
       </div>
@@ -3436,17 +3435,17 @@
       <h3>Generate Report</h3>
       <div class="msub">Exports live city data, KPIs, and AI insights currently loaded in the dashboard.</div>
       <div class="report-opts">
-        <div class="report-opt" onclick="generatePDF()">
+        <div class="report-opt" onclick="generatePDF()" role="button" tabindex="0" aria-label="Download PDF report">
           <div class="ro-i">📄</div>
           <div class="ro-t">PDF</div>
           <div class="ro-s">Charts + insights</div>
         </div>
-        <div class="report-opt" onclick="generateExcel()">
+        <div class="report-opt" onclick="generateExcel()" role="button" tabindex="0" aria-label="Download Excel report">
           <div class="ro-i">📊</div>
           <div class="ro-t">Excel</div>
           <div class="ro-s">Full data table</div>
         </div>
-        <div class="report-opt" onclick="window.location.href='/api/export/csv'">
+        <div class="report-opt" onclick="window.location.href='/api/export/csv'" role="button" tabindex="0" aria-label="Download CSV report">
           <div class="ro-i">📁</div>
           <div class="ro-t">CSV</div>
           <div class="ro-s">Raw export</div>
@@ -3521,7 +3520,7 @@
     });
     document.addEventListener('keydown', e => {
       if (e.key !== 'Enter' && e.key !== ' ') return;
-      const target = e.target.closest('.kc.clickable, .a11y-btn');
+      const target = e.target.closest('[role="button"]');
       if (target) { e.preventDefault(); target.click() }
     });
 
@@ -3648,7 +3647,7 @@
       const u = c.current_usi ?? c.avg_usi ?? 0, r = c.current_risk || 'N/A', g = ug(u);
       const src = c.freshness?.is_fresh ? 'Live' : 'Avg';
       const delay = Math.min((i || 0) * .03, .6);
-      return `<div class="cc${c.is_anomaly ? ' anomaly' : ''}" id="cc-${c.city}" onclick="selCity('${c.city}')" style="--cglow:${rc(r)}1a;animation-delay:${delay}s">
+      return `<div class="cc${c.is_anomaly ? ' anomaly' : ''}" id="cc-${c.city}" onclick="selCity('${c.city}')" role="button" tabindex="0" aria-label="View details for ${c.city}" style="--cglow:${rc(r)}1a;animation-delay:${delay}s">
     <div class="ct"><div class="cn">${c.city}</div><div class="cb ${rk(r)}">${r}</div></div>
     <div class="cu" style="--ug:${g}">${u?.toFixed(1) || '—'}</div>
     <div class="cul">Urban Stress Index · ${src}</div>
@@ -3751,7 +3750,7 @@
           const hc = hs > 70 ? '#22d47a' : hs > 40 ? '#fbbf24' : '#ff3d6b';
           return `<tr>
           <td><span class="rnk-num ${nc}">${medal || '#' + r.live_rank}</span></td>
-          <td style="font-weight:700;cursor:pointer" onclick="goCity('${r.city}')">${r.city}</td>
+          <td style="font-weight:700;cursor:pointer" onclick="goCity('${r.city}')" role="button" tabindex="0" aria-label="View details for ${r.city}">${r.city}</td>
           <td><div style="font-family:var(--f2);font-size:16px;font-weight:700;color:${hc}">${hs.toFixed(1)}</div><div class="hs-bar"><div class="hs-fill" style="width:${hs}%;background:${hc}"></div></div></td>
           <td style="font-family:var(--f2)">${r.avg_usi?.toFixed(2) || '—'}</td>
           <td style="font-family:var(--f2)">${r.avg_aqi?.toFixed(0) || '—'}</td>
@@ -3914,7 +3913,7 @@
       if (!unread) { badge.classList.remove('show') } else { badge.classList.add('show'); badge.textContent = unread > 99 ? '99+' : unread; }
       if (!filtered.length) { list.innerHTML = '<div class="ndrop-empty">No alerts in this category</div>'; saveAlertHistory(); return }
       list.innerHTML = filtered.slice(0, 15).map(a => `
-        <div class="ndrop-item" onclick="goToCity('${a.city}')">
+        <div class="ndrop-item" onclick="goToCity('${a.city}')" role="button" tabindex="0">
           <div class="ndrop-dot" style="background:${rc(a.risk)}"></div>
           <div class="ndrop-body"><div class="ndrop-t">${a.city} — ${a.risk} risk</div><div class="ndrop-s">AQI ${a.aqi?.toFixed(0) || '—'} · ${a.time}</div></div>
         </div>`).join('');
@@ -4009,7 +4008,7 @@
 
         const top = [...cities].filter(c => c.current_usi != null).sort((a, b) => (b.current_usi || 0) - (a.current_usi || 0)).slice(0, 6);
         document.getElementById('exec-toprisk').innerHTML = top.length ? top.map(c => `
-          <div class="exec-mini-row" style="cursor:pointer" onclick="goToCity('${c.city}')">
+          <div class="exec-mini-row" style="cursor:pointer" onclick="goToCity('${c.city}')" role="button" tabindex="0">
             <span>${c.city}</span>
             <span style="color:${rc(c.current_risk)};font-family:var(--f2)">${c.current_usi?.toFixed(1)} · ${c.current_risk}</span>
           </div>`).join('') : stateBlock('empty', 'No live data yet', 'Waiting for the speed layer to populate readings.');
@@ -4119,7 +4118,7 @@
       document.getElementById('mapLegend').innerHTML = RISK_TIERS.map(t => {
         const count = cities.filter(c => c.current_risk === t.key).length;
         const dim = MAP_RISK_FILTER !== 'all' && MAP_RISK_FILTER !== t.key;
-        return `<div class="leg-item${dim ? ' dim' : ''}" onclick="setMapRiskFilter('${t.key}', document.querySelector('.toolbtn[data-risk=\\'${t.key}\\']'))">
+        return `<div class="leg-item${dim ? ' dim' : ''}" onclick="setMapRiskFilter('${t.key}', document.querySelector('.toolbtn[data-risk=\\'${t.key}\\']'))" role="button" tabindex="0">
           <i style="background:${t.color}"></i>${t.key}<span class="leg-count">${count}</span>
         </div>`;
       }).join('');
@@ -4295,7 +4294,7 @@
       el.className = `toast ${type}`;
       el.innerHTML = `<div class="ti">${icons[type] || icons.info}</div>
         <div class="tb"><div class="tt">${title}</div>${sub ? `<div class="ts">${sub}</div>` : ''}</div>
-        <div class="tx" onclick="dismissToast(this.parentElement)">✕</div>`;
+        <div class="tx" onclick="dismissToast(this.parentElement)" role="button" tabindex="0" aria-label="Dismiss notification">✕</div>`;
       stack.appendChild(el);
       setTimeout(() => dismissToast(el), duration);
     }
@@ -4455,7 +4454,7 @@
 
     function renderAISuggestions(list) {
       document.getElementById('aiSuggest').innerHTML = list.map(q =>
-        `<div class="ai-sug-chip" onclick="aiAsk('${q.replace(/'/g, "\\'")}')">${q}</div>`
+        `<div class="ai-sug-chip" onclick="aiAsk('${q.replace(/'/g, "\\'")}')" role="button" tabindex="0">${q}</div>`
       ).join('');
     }
 
@@ -4712,7 +4711,7 @@
     /* ── Standardized loading / empty / error state block (used across new panels) ── */
     function stateBlock(type, title, sub, retryFn) {
       const icon = type === 'error' ? '⚠️' : type === 'empty' ? '📭' : '⏳';
-      const retryHtml = retryFn ? `<div class="sb-retry" onclick="${retryFn}">Retry</div>` : '';
+      const retryHtml = retryFn ? `<div class="sb-retry" onclick="${retryFn}" role="button" tabindex="0">Retry</div>` : '';
       return `<div class="state-block ${type === 'error' ? 'err' : ''}">
         <div class="sb-icon">${icon}</div>
         <div class="sb-title">${title}</div>
@@ -4734,7 +4733,7 @@
       const cities = Object.values(CD);
       if (!cities.length) return openDetail('Cities Monitored', '', stateBlock('empty', 'No city data yet', 'The batch/speed layers may still be starting up.'));
       const rows = cities.sort((a, b) => a.city.localeCompare(b.city)).map(c => `
-        <div class="detail-row" onclick="closeDetail();goToCity('${c.city}')">
+        <div class="detail-row" onclick="closeDetail();goToCity('${c.city}')" role="button" tabindex="0">
           <span>${c.city}</span>
           <span style="color:${rc(c.current_risk)};font-family:var(--f2)">AQI ${c.current_aqi?.toFixed(0) ?? '—'} · ${c.current_risk || 'N/A'}</span>
         </div>`).join('');
@@ -4761,7 +4760,7 @@
       const cities = Object.values(CD).filter(c => c.is_anomaly);
       if (!cities.length) return openDetail('Active Anomalies', '', stateBlock('empty', 'No anomalies right now', 'All cities are within their expected ranges.'));
       const rows = cities.map(c => `
-        <div class="detail-row" onclick="closeDetail();goToCity('${c.city}')">
+        <div class="detail-row" onclick="closeDetail();goToCity('${c.city}')" role="button" tabindex="0">
           <span>⚠ ${c.city}</span>
           <span style="color:${rc(c.current_risk)};font-family:var(--f2)">${c.anomaly_method || 'threshold'} · ${c.current_risk}</span>
         </div>`).join('');
@@ -4772,7 +4771,7 @@
       const cities = Object.values(CD);
       if (!cities.length) return openDetail('Streaming Freshness', '', stateBlock('empty', 'No streaming data yet'));
       const rows = cities.sort((a, b) => (b.is_fresh === true) - (a.is_fresh === true)).map(c => `
-        <div class="detail-row" onclick="closeDetail();goToCity('${c.city}')">
+        <div class="detail-row" onclick="closeDetail();goToCity('${c.city}')" role="button" tabindex="0">
           <span>${c.city}</span>
           <span style="font-family:var(--f2);color:${c.is_fresh ? 'var(--ok)' : 'var(--txt3)'}">${c.is_fresh ? '● Fresh' : '○ Stale'}</span>
         </div>`).join('');
@@ -4783,7 +4782,7 @@
       const cities = Object.values(CD).filter(c => c.current_usi != null);
       if (!cities.length) return openDetail('Average Stress Index', '', stateBlock('empty', 'No USI data yet'));
       const rows = [...cities].sort((a, b) => (b.current_usi || 0) - (a.current_usi || 0)).map(c => `
-        <div class="detail-row" onclick="closeDetail();goToCity('${c.city}')">
+        <div class="detail-row" onclick="closeDetail();goToCity('${c.city}')" role="button" tabindex="0">
           <span>${c.city}</span>
           <span style="color:${rc(c.current_risk)};font-family:var(--f2)">${c.current_usi?.toFixed(1)}</span>
         </div>`).join('');
@@ -4795,7 +4794,7 @@
       const cities = Object.values(CD).filter(c => c.health_score != null);
       if (!cities.length) return openDetail('Healthiest City', '', stateBlock('empty', 'No health score data yet'));
       const rows = [...cities].sort((a, b) => (b.health_score || 0) - (a.health_score || 0)).slice(0, 15).map(c => `
-        <div class="detail-row" onclick="closeDetail();goToCity('${c.city}')">
+        <div class="detail-row" onclick="closeDetail();goToCity('${c.city}')" role="button" tabindex="0">
           <span>${c.city}</span>
           <span style="color:var(--ok);font-family:var(--f2)">${c.health_score?.toFixed(0)}/100</span>
         </div>`).join('');
