@@ -886,17 +886,15 @@ def get_anomaly_detail(city_name):
         stats = (batch or {}).get("stats", {})
 
         try:
-            import base64, pickle
-            from ai_layer.anomaly_ensemble import AnomalyEnsemble
-            from ai_layer.explainability   import Explainability
+            from ai_layer.model_registry    import ModelRegistry
+            from ai_layer.anomaly_ensemble  import AnomalyEnsemble  # noqa: F401 -- required for unpickling
+            from ai_layer.explainability    import Explainability
             import numpy as np
 
-            # Load ensemble model
-            anom_info = (batch or {}).get("anomaly_model", {})
-            b64       = anom_info.get("model_b64")
-            ensemble  = None
-            if b64:
-                ensemble = pickle.loads(base64.b64decode(b64))
+            # Load ensemble model (file-backed via ModelRegistry -- see
+            # common/storage.py; no model bytes are stored in Mongo)
+            registry = ModelRegistry(db)
+            ensemble, _meta = registry.load_best(lookup, "anomaly_ensemble", horizon="realtime")
 
             if ensemble:
                 X       = np.array([[aqi, temp, hum, usi]], dtype=np.float32)

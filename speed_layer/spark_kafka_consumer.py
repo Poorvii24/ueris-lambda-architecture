@@ -35,8 +35,6 @@ Environment variables:
 import os
 import sys
 import json
-import pickle
-import base64
 import time
 from datetime import datetime, timezone
 
@@ -100,23 +98,24 @@ MESSAGE_SCHEMA = StructType([
 
 def load_anomaly_models(mongo_uri: str, db_name: str) -> dict:
     """
-    Load Isolation Forest models from MongoDB batch_views.
-    Returns dict of city -> sklearn IsolationForest instance.
+    Load per-city trained anomaly ensembles via ModelRegistry (file-backed
+    -- see common/storage.py). Returns dict of city -> model instance.
     """
+    from ai_layer.model_registry import ModelRegistry
+    from ai_layer.anomaly_ensemble import AnomalyEnsemble  # noqa: F401 -- required for unpickling
+
     models = {}
     try:
-        client = mongo_db.get_client()
-        db     = client[db_name]
-        docs   = db["batch_views"].find({}, {"city": 1, "anomaly_model": 1, "_id": 0})
-        for doc in docs:
-            city = doc.get("city")
-            info = doc.get("anomaly_model", {})
-            b64  = info.get("model_b64")
-            if city and b64:
-                try:
-                    models[city] = pickle.loads(base64.b64decode(b64))
-                except Exception as e:
-                    logger.warning("spark.model.load.failed", city=city, error=str(e))
+        client   = mongo_db.get_client()
+        db       = client[db_name]
+        registry = ModelRegistry(db)
+        for city in db["batch_views"].distinct("city"):
+            try:
+                model, _meta = registry.load_best(city, "anomaly_ensemble", horizon="realtime")
+                if model:
+                    models[city] = model
+            except Exception as e:
+                logger.warning("spark.model.load.failed", city=city, error=str(e))
         logger.info("spark.models.loaded", count=len(models))
     except Exception as e:
         logger.error("spark.models.load.error", error=str(e))

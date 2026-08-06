@@ -32,8 +32,6 @@ Environment variables:
 import os
 import sys
 import time
-import base64
-import pickle
 from datetime import datetime, timezone
 
 import numpy as np
@@ -199,10 +197,11 @@ def main():
                         )
                         # Evaluate
                         eval_stats = ensemble.evaluate(X_anom)
-                        # Serialize
-                        model_b64 = base64.b64encode(pickle.dumps(ensemble)).decode("utf-8")
+                        # NOTE: the model object itself is NOT embedded here -- it is
+                        # saved to a file by registry.save() below, the single source
+                        # of truth for this model. This doc is just a small,
+                        # storage-cheap summary for quick display/debugging.
                         anomaly_model_doc = {
-                            "model_b64":      model_b64,
                             "model_type":     "AnomalyEnsemble",
                             "models":         ["IsolationForest","LOF","OneClassSVM"],
                             "contamination":  0.05,
@@ -210,7 +209,7 @@ def main():
                             "eval_stats":     eval_stats,
                             "trained_at":     datetime.now(timezone.utc).isoformat(),
                         }
-                        # Also save to registry
+                        # Save the actual model to disk + metadata to Mongo (registry)
                         registry.save(
                             city=city,
                             model_type="anomaly_ensemble",

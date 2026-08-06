@@ -25,7 +25,7 @@ Run:
   python batch_layer/batch_processing.py
 """
 
-import os, sys, json, pickle, base64
+import os, sys, json
 import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -180,7 +180,11 @@ for city, data in city_data_map.items():
     clf.fit(X)
     scores = clf.decision_function(X)
     threshold = float(np.mean(scores) - 2 * np.std(scores))
-    model_b64 = base64.b64encode(pickle.dumps(clf)).decode("utf-8")
+    # NOTE: the model itself is NOT stored here. ai_batch_processor.py runs
+    # right after this script and trains + saves the production AnomalyEnsemble
+    # (via ModelRegistry, to a file) into this same city's record -- so a
+    # pickled model here would just be immediately discarded unread. Keep
+    # only the lightweight summary stats, which ARE useful on their own.
     anomaly_models[city] = {
         "threshold":     round(threshold, 6),
         "contamination": 0.05,
@@ -188,7 +192,6 @@ for city, data in city_data_map.items():
         "trained_on":    len(data),
         "mean_score":    round(float(np.mean(scores)), 6),
         "std_score":     round(float(np.std(scores)), 6),
-        "model_b64":     model_b64,
     }
     print(f"   {city:<24} | n={len(data):4d} | threshold={threshold:.4f}")
 

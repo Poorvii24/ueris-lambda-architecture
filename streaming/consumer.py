@@ -27,8 +27,6 @@ Environment variables: see streaming/kafka_config.py
 
 import json
 import os
-import pickle
-import base64
 import time
 import threading
 from datetime import datetime, timezone
@@ -153,23 +151,25 @@ class UERISConsumer:
 
     def _load_anomaly_models(self):
         """
-        Load Isolation Forest models from MongoDB batch_views.
-        Called on startup and periodically during operation.
+        Load trained anomaly ensembles via ModelRegistry (file-backed --
+        see common/storage.py). Called on startup and periodically during
+        operation. Models are no longer stored as base64 blobs in
+        MongoDB; ModelRegistry loads them from models/<city>/... instead.
         """
+        from ai_layer.model_registry import ModelRegistry
+        from ai_layer.anomaly_ensemble import AnomalyEnsemble  # noqa: F401 -- required for unpickling
+
         models = {}
         try:
-            docs = self._db["batch_views"].find(
-                {}, {"city": 1, "anomaly_model": 1, "_id": 0}
-            )
-            for doc in docs:
-                city  = doc.get("city")
-                info  = doc.get("anomaly_model", {})
-                b64   = info.get("model_b64")
-                if city and b64:
-                    try:
-                        models[city] = pickle.loads(base64.b64decode(b64))
-                    except Exception as e:
-                        logger.warning("consumer.model.load.failed", city=city, error=str(e))
+            registry = ModelRegistry(self._db)
+            cities = self._db["batch_views"].distinct("city")
+            for city in cities:
+                try:
+                    model, _meta = registry.load_best(city, "anomaly_ensemble", horizon="realtime")
+                    if model:
+                        models[city] = model
+                except Exception as e:
+                    logger.warning("consumer.model.load.failed", city=city, error=str(e))
             self._anomaly_models  = models
             self._last_model_load = time.monotonic()
             logger.info("consumer.models.loaded", count=len(models))

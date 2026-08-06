@@ -37,8 +37,6 @@ import sys
 import json
 import time
 import glob
-import pickle
-import base64
 from datetime import datetime, timezone
 
 import numpy as np
@@ -129,26 +127,25 @@ print(f"{'='*60}\n")
 
 def load_anomaly_models(db) -> dict:
     """
-    Load per-city Isolation Forest models from MongoDB batch_views.
-    Returns dict of city → sklearn IsolationForest instance.
+    Load per-city trained anomaly ensembles via ModelRegistry (file-backed
+    -- see common/storage.py). Returns dict of city -> model instance.
     """
+    from ai_layer.model_registry import ModelRegistry
+    from ai_layer.anomaly_ensemble import AnomalyEnsemble  # noqa: F401 -- required for unpickling
+
     models = {}
     try:
-        docs = db["batch_views"].find(
-            {}, {"city": 1, "anomaly_model": 1, "_id": 0}
-        )
-        for doc in docs:
-            city   = doc.get("city")
-            info   = doc.get("anomaly_model", {})
-            b64    = info.get("model_b64")
-            if city and b64:
-                try:
-                    models[city] = pickle.loads(base64.b64decode(b64))
-                except Exception as e:
-                    logger.warning(
-                        "speed_layer.model.load.failed",
-                        city=city, error=str(e)
-                    )
+        registry = ModelRegistry(db)
+        for city in db["batch_views"].distinct("city"):
+            try:
+                model, _meta = registry.load_best(city, "anomaly_ensemble", horizon="realtime")
+                if model:
+                    models[city] = model
+            except Exception as e:
+                logger.warning(
+                    "speed_layer.model.load.failed",
+                    city=city, error=str(e)
+                )
         logger.info("speed_layer.models.loaded", count=len(models))
         print(f"  ML models loaded: {len(models)} cities")
     except Exception as e:
