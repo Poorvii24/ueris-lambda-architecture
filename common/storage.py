@@ -213,11 +213,54 @@ class StorageManager:
             return True
         return False
 
-    # ── Processed-data archival ─────────────────────────────────────────────
+    # ── Processed-dataset storage (Parquet primary, CSV fallback) ──────────
+    def save_dataset(self, name: str, df, fmt: str = "parquet") -> Path:
+        """
+        Persist an intermediate/processed dataset (a pandas DataFrame) to
+        processed/ instead of MongoDB. Timestamped, so archive_stale_
+        processed_files() can find and age it out later.
+
+        fmt="parquet" (default) requires pyarrow or fastparquet -- falls
+        back to CSV automatically if neither is installed, so this never
+        hard-fails a batch run over a missing optional dependency.
+        """
+        ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        if fmt == "parquet":
+            path = config.PROCESSED_DIR / f"{name}_{ts}.parquet"
+            try:
+                df.to_parquet(path, index=False)
+                self.log.info(f"Saved processed dataset {path.name} "
+                               f"({path.stat().st_size/1024:.1f} KB, parquet)")
+                return path
+            except Exception as e:
+                self.log.warning(f"Parquet write failed ({e}); falling back to CSV")
+                fmt = "csv"
+        path = config.PROCESSED_DIR / f"{name}_{ts}.csv"
+        df.to_csv(path, index=False)
+        self.log.info(f"Saved processed dataset {path.name} "
+                       f"({path.stat().st_size/1024:.1f} KB, csv)")
+        return path
+
+    def load_dataset(self, path):
+        """Load a dataset saved with save_dataset(). Auto-detects Parquet
+        vs CSV from the file extension."""
+        import pandas as pd
+        p = Path(path)
+        if not p.is_absolute():
+            p = config.PROJECT_ROOT / path
+        if not p.exists():
+            raise StorageError(f"Dataset file not found: {p}")
+        try:
+            return pd.read_parquet(p) if p.suffix == ".parquet" else pd.read_csv(p)
+        except Exception as e:
+            self.log.error(f"load_dataset failed for {p}: {e}")
+            raise StorageError(str(e)) from e
+
     def save_processed(self, name: str, data: Any) -> Path:
-        """Write an intermediate processed dataset (e.g. a per-batch-run
-        DataFrame snapshot) to processed/ as gzip-compressed JSON, tagged
-        with a timestamp so archive_stale_processed_files() can find it later."""
+        """For non-tabular intermediate data (dicts/lists) that doesn't fit
+        a DataFrame -- e.g. a raw API response snapshot. Tabular data
+        should use save_dataset() instead (Parquet/CSV, per project
+        convention); this is the fallback for everything else."""
         ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
         path = config.PROCESSED_DIR / f"{name}_{ts}.json.gz"
         with gzip.open(path, "wt", encoding="utf-8") as f:

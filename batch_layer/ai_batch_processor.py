@@ -39,6 +39,7 @@ import pandas as pd
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from common import db as mongo_db
+from common.storage import StorageManager
 
 os.environ["PYSPARK_PYTHON"]        = os.environ.get("PYSPARK_PYTHON", sys.executable)
 os.environ["PYSPARK_DRIVER_PYTHON"] = os.environ.get("PYSPARK_DRIVER_PYTHON", sys.executable)
@@ -128,7 +129,8 @@ def main():
     # ── Connect to MongoDB ─────────────────────────────────────────────────────
     client   = mongo_db.get_client()
     db       = client[DB_NAME]
-    registry = ModelRegistry(db)
+    storage  = StorageManager()
+    registry = ModelRegistry(db, storage)
 
     # ── Load dataset ───────────────────────────────────────────────────────────
     print("[1/5] Loading Kaggle dataset...")
@@ -250,9 +252,12 @@ def main():
                 insight = {}
 
             # ── Update MongoDB batch_views ─────────────────────────────────────
+            # NOTE: trend_profile is intentionally NOT duplicated here -- it is
+            # written once, below, to the standalone trend_profiles collection,
+            # which is the only place any API route reads it from. Embedding a
+            # second full copy in batch_views was pure duplicate storage.
             update_doc = {
                 "ai_enriched_at":     datetime.now(timezone.utc).isoformat(),
-                "trend_profile":      trend_profile,
                 "city_insight":       insight,
                 "forecasting_models": {
                     horizon: {
@@ -324,14 +329,23 @@ def main():
         print(f"      System insight failed: {e}")
 
     # ── Model registry summary ─────────────────────────────────────────────────
-    print("\n[4/5] Model registry summary...")
+    print("\n[4/6] Model registry summary...")
     reg_summary = registry.get_registry_summary()
     print(f"      Total models stored : {reg_summary.get('total_models', 0)}")
     print(f"      Cities with models  : {reg_summary.get('cities_with_models', 0)}")
     print(f"      Model types         : {reg_summary.get('model_types', [])}")
 
+    # ── Storage maintenance (automatic cleanup/archival) ───────────────────────
+    print("\n[5/6] Storage maintenance...")
+    try:
+        maint = storage.run_maintenance()
+        print(f"      Cache files purged      : {maint['cache_purged']}")
+        print(f"      Processed files archived: {maint['processed_archived']}")
+    except Exception as e:
+        print(f"      Maintenance skipped: {e}")
+
     # ── Final summary ──────────────────────────────────────────────────────────
-    print("\n[5/5] Summary")
+    print("\n[6/6] Summary")
     successful = sum(1 for r in city_results if r["success"])
     elapsed    = round(time.monotonic() - t_total, 1)
 

@@ -16,6 +16,7 @@ scikit-learn>=1.4.0
 joblib>=1.3.0
 numpy>=1.26.0
 pandas>=2.0.0
+pyarrow>=14.0.0
 
 # ── Kafka (enterprise streaming mode) ─────────────────────────────────────────
 confluent-kafka>=2.3.0
