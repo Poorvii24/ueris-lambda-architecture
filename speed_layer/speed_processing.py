@@ -46,6 +46,8 @@ import pymongo
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from common import db as mongo_db
+from common.storage import StorageManager
+storage = StorageManager()
 from streaming.monitoring import logger, metrics
 from streaming.dlq_handler import DLQHandler
 
@@ -263,6 +265,7 @@ def process_loop():
     mongo_client   = mongo_db.get_client()
     db             = mongo_client[DB_NAME]
     col            = db[SPEED_COLLECTION]
+    storage.ensure_ttl_indexes(db)
 
     # DLQ handler
     dlq            = DLQHandler(kafka_producer=None)
@@ -401,6 +404,7 @@ def process_loop():
                 total_anomaly  += 1
                 metrics.record_anomaly(city)
                 send_alert(city, aqi, usi, risk, method)
+                storage.log_anomaly_event(mongo_client[DB_NAME], city, aqi, usi, risk, method)
                 logger.warning(
                     "speed_layer.anomaly.detected",
                     city=city, aqi=aqi, usi=usi,

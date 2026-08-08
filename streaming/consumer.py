@@ -39,6 +39,8 @@ import pymongo
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from common import db as mongo_db
+from common.storage import StorageManager
+storage = StorageManager()
 
 from streaming.kafka_config import (
     get_consumer_config,
@@ -128,6 +130,7 @@ class UERISConsumer:
         self._mongo_client = mongo_db.get_client()
         self._db           = self._mongo_client[DB_NAME]
         self._col          = self._db[SPEED_COLLECTION]
+        storage.ensure_ttl_indexes(self._db)
 
         # DLQ (file-only for consumer; Kafka DLQ published via separate producer)
         self._dlq = DLQHandler(kafka_producer=None, dlq_topic=KAFKA_DLQ_TOPIC)
@@ -259,6 +262,7 @@ class UERISConsumer:
         if is_anomaly:
             metrics.record_anomaly(city)
             send_alert_webhook(city, aqi, usi, risk, method)
+            storage.log_anomaly_event(self._db, city, aqi, usi, risk, method)
             logger.warning(
                 "consumer.anomaly.detected",
                 city=city,

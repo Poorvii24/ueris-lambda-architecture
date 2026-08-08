@@ -36,6 +36,10 @@ if __name__ == "__main__":
     print("  UERIS storage maintenance")
     print("=" * 60)
 
+    # Idempotent -- confirms the TTL index exists (self-healing if it was
+    # ever dropped or a fresh cluster hasn't had it created yet).
+    storage.ensure_ttl_indexes()
+
     result = storage.run_maintenance()
     print(f"Cache files purged:      {result['cache_purged']}")
     print(f"Processed files archived: {result['processed_archived']}")
@@ -47,12 +51,17 @@ if __name__ == "__main__":
 
     print("\nMongoDB:")
     if storage.ping():
-        try:
-            db_stats = storage.db().command("dbStats")
-            print(f"  dataSize           {human(db_stats.get('dataSize', 0))}")
-            print(f"  storageSize        {human(db_stats.get('storageSize', 0))}")
-        except Exception as e:
-            print(f"  Could not fetch dbStats: {e}")
+        mongo_stats = storage.get_mongo_storage_stats()
+        if "error" in mongo_stats:
+            print(f"  Could not fetch stats: {mongo_stats['error']}")
+        else:
+            print(f"  dataSize           {human(mongo_stats['data_size_bytes'])}")
+            print(f"  storageSize        {human(mongo_stats['storage_size_bytes'])}")
+            print(f"  indexSize          {human(mongo_stats['index_size_bytes'])}")
+            print("  Per collection:")
+            for name, c in sorted(mongo_stats["collections"].items(),
+                                   key=lambda kv: -kv[1]["storage_size_bytes"]):
+                print(f"    {name:<20} {c['count']:>6} docs   {human(c['storage_size_bytes'])}")
     else:
         print("  Unreachable (check MONGO_URI)")
 

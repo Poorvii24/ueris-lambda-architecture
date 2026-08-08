@@ -27,9 +27,11 @@ Run:
 
 import os, sys, json
 import numpy as np
+import pandas as pd
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from common import db as mongo_db
+from common.storage import StorageManager
 
 _py = os.environ.get("PYSPARK_PYTHON", sys.executable)
 os.environ["PYSPARK_PYTHON"]        = _py
@@ -263,9 +265,29 @@ def health_score(avg_usi):
         return 50.0
     return round((1 - (avg_usi - usi_min) / (usi_max - usi_min)) * 100, 1)
 
-client = mongo_db.get_client()
-db     = client[DB_NAME]
-col    = db[BATCH_COLLECTION]
+client  = mongo_db.get_client()
+db      = client[DB_NAME]
+col     = db[BATCH_COLLECTION]
+storage = StorageManager()
+
+# Archive the current batch_views snapshot to archives/ before overwriting
+# it -- this is the actual historical record (compressed Parquet on disk),
+# not a growing Mongo collection. Best-effort: a failed archive should
+# never block the batch run itself.
+try:
+    existing = list(col.find({}, {"_id": 0}))
+    if existing:
+        df_snapshot = pd.DataFrame(existing)
+        # Nested dicts (trend_profile, anomaly_model, etc.) don't round-trip
+        # through Parquet cleanly -- flatten to JSON strings for those columns.
+        for c in df_snapshot.columns:
+            if df_snapshot[c].apply(lambda v: isinstance(v, (dict, list))).any():
+                df_snapshot[c] = df_snapshot[c].apply(json.dumps)
+        snap_path = storage.save_dataset(f"{BATCH_COLLECTION}_snapshot", df_snapshot)
+        print(f"  Archived pre-overwrite snapshot: {snap_path.name} ({len(existing)} cities)")
+except Exception as e:
+    print(f"  Snapshot archive skipped ({e})")
+
 col.drop()
 
 sorted_by_usi = sorted(stats_rows, key=lambda r: r["avg_usi"])

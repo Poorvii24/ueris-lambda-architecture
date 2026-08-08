@@ -312,6 +312,82 @@ class StorageManager:
         self.log.info(f"Maintenance run complete: {result}")
         return result
 
+    # ── Anomaly event log (TTL-backed) ──────────────────────────────────────
+    # This is the ONE collection in UERIS that is genuinely append-only --
+    # every other collection (realtime_views, batch_views, trend_profiles,
+    # system_insights, ai_models) is upserted-by-key or drop-and-recreate on
+    # every run, so it never grows unbounded and a TTL index on any of them
+    # would be pointless at best and, if the batch/speed layer ever stalls,
+    # actively dangerous (it would delete the last-known-good dashboard data
+    # instead of just letting it go stale). anomaly_events is different: it's
+    # meant to be a historical log of every detected anomaly, so it needs
+    # (and gets) real retention.
+    ANOMALY_EVENTS_TTL_DAYS = 90
+
+    def ensure_ttl_indexes(self, db=None) -> None:
+        """Idempotent -- safe to call on every process startup. Creates the
+        TTL index on anomaly_events if it doesn't already exist. MongoDB
+        handles the actual expiry server-side (a background task that runs
+        every ~60s), so no cron/scheduled job is needed for this part."""
+        database = db if db is not None else self.db()
+        try:
+            database["anomaly_events"].create_index(
+                "detected_at",
+                expireAfterSeconds=self.ANOMALY_EVENTS_TTL_DAYS * 86400,
+                name="ttl_detected_at",
+            )
+            database["anomaly_events"].create_index([("city", 1), ("detected_at", -1)])
+            self.log.info(f"TTL index ensured on anomaly_events "
+                           f"({self.ANOMALY_EVENTS_TTL_DAYS}d retention)")
+        except Exception as e:
+            # If a differently-configured TTL index already exists on this
+            # field, Mongo raises an IndexOptionsConflict -- log and move on
+            # rather than crashing the calling service over an index detail.
+            self.log.warning(f"ensure_ttl_indexes: {e}")
+
+    def log_anomaly_event(self, db, city: str, aqi: float, usi: float,
+                           risk: str, method: str) -> None:
+        """Append one anomaly detection event. Cheap (a handful of small
+        fields) and self-cleaning via the TTL index above -- old events age
+        out automatically, nothing to archive or manually delete."""
+        try:
+            db["anomaly_events"].insert_one({
+                "city": city, "aqi": aqi, "usi": usi, "risk": risk,
+                "method": method,
+                "detected_at": datetime.now(timezone.utc),  # real BSON Date -- required for TTL
+            })
+        except Exception as e:
+            self.log.warning(f"log_anomaly_event failed for {city}: {e}")
+
+    # ── MongoDB storage monitoring (for dashboards / /api/health) ──────────
+    def get_mongo_storage_stats(self, db=None) -> dict:
+        """Returns Atlas/MongoDB-reported storage figures plus a per-collection
+        breakdown, so a dashboard can show 'X MB of Y MB used' without the
+        caller needing to know anything about dbStats/collStats internals."""
+        database = db if db is not None else self.db()
+        try:
+            stats = database.command("dbStats")
+            collections = {}
+            for name in database.list_collection_names():
+                try:
+                    cs = database.command("collStats", name)
+                    collections[name] = {
+                        "count": cs.get("count", 0),
+                        "size_bytes": cs.get("size", 0),
+                        "storage_size_bytes": cs.get("storageSize", 0),
+                    }
+                except Exception:
+                    continue
+            return {
+                "data_size_bytes":    stats.get("dataSize", 0),
+                "storage_size_bytes": stats.get("storageSize", 0),
+                "index_size_bytes":   stats.get("indexSize", 0),
+                "collections":        collections,
+            }
+        except Exception as e:
+            self.log.warning(f"get_mongo_storage_stats failed: {e}")
+            return {"error": str(e)}
+
     # ── Disk usage introspection (for the /api/health / dashboard) ─────────
     def storage_stats(self) -> dict:
         def dir_size(p: Path) -> int:

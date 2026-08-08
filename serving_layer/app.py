@@ -33,6 +33,8 @@ from flask import Flask, jsonify, send_from_directory, Response
 from flask_cors import CORS
 
 from common import db as mongo_db
+from common.storage import StorageManager
+_storage_manager = StorageManager()
 
 # ── App Setup ──────────────────────────────────────────────────────────────────
 app = Flask(
@@ -466,6 +468,9 @@ def health():
                 "documents": db["data_quality"].count_documents({}),
                 "ready":     db["data_quality"].count_documents({}) > 0,
             },
+            # Additive: task-6 storage monitoring. Existing keys above are
+            # unchanged, so no current consumer of this endpoint is affected.
+            "storage_stats": _storage_manager.get_mongo_storage_stats(db),
         })
     finally:
         client.close()
@@ -553,6 +558,7 @@ if __name__ == "__main__":
     print(f"  MongoDB   : {MONGO_URI[:40]}...")
     if mongo_db.ping():
         print(f"  Mongo ping: OK")
+        _storage_manager.ensure_ttl_indexes()
     else:
         print(f"  Mongo ping: FAILED -- app will start, but every DB-backed "
               f"route will fail until MONGO_URI/network is fixed.")
